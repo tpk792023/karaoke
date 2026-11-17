@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phòng Hát Karaoke</title>
+<meta name="description" content="Hát karaoke không quảng cáo, tìm bài bằng giọng nói, lưu danh sách, chạy offline">
+<meta name="theme-color" content="#140f26">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#0f0b1e; --panel:#1a1432; --panel2:#231b42; --line:#342a5c;
+  --text:#f4f0ff; --muted:#a79fc6; --pink:#ff4fa3; --gold:#ffc83d; --cyan:#4fd8ff; --ok:#5ee08a; --bad:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:15px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:#2e2456;border-color:#4a3d7e}
+button:disabled{opacity:.4;cursor:default}
+button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+input,select{font:inherit;color:var(--text);background:#120d26;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+input[type=range]{padding:0;accent-color:var(--pink);background:none;border:0}
+header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:linear-gradient(90deg,#1d1440,#2a1240);border-bottom:1px solid var(--line);flex:none}
+.brand{font-weight:800;font-size:19px;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+.brand b{background:linear-gradient(90deg,var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+#netStat{font-size:13px;color:var(--muted);margin-left:auto}
+#netStat.off{color:var(--gold)}
+main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,380px) 1fr minmax(240px,320px);gap:10px;padding:10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+#lib{padding:10px;gap:8px}
+.searchbar{display:flex;gap:6px}
+.searchbar input{flex:1;min-width:0;font-size:16px}
+#btnVoice{font-size:20px;padding:4px 12px;border-radius:12px}
+#btnVoice.listening{background:var(--bad);border-color:var(--bad);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(255,107,107,.25)}}
+#voiceHint{font-size:13px;color:var(--gold);min-height:0}
+#voiceHint:empty{display:none}
+.tabs{display:flex;flex-wrap:wrap;gap:5px}
+.tabs button{padding:5px 9px;font-size:13.5px;border-radius:20px}
+#libInfo{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;align-items:center}
+#permBar{background:#3b2a0c;border:1px solid #6b4f12;border-radius:10px;padding:8px 10px;font-size:13.5px;display:flex;gap:8px;align-items:center}
+#permBar[hidden]{display:none}
+#permBar button{background:var(--gold);color:#221a00;border:0;font-weight:700;white-space:nowrap}
+.list{overflow-y:auto;min-height:0;flex:1}
+.song{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
+.song:hover{background:var(--panel2)}
+.song.playing{background:rgba(255,79,163,.15)}
+.song .meta{flex:1;min-width:0}
+.song .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song .s{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:8px;background:#30275a;color:#d7cffa;margin-left:3px}
+.tag.nu{background:#5a2748;color:#ffc2e2}.tag.nam{background:#1f3f5a;color:#bfe7ff}
+.song button{padding:4px 9px;border-radius:9px;flex:none}
+.song .fav{background:none;border:0;font-size:18px;color:#5d5385;padding:2px 4px}
+.song .fav.yes{color:var(--gold)}
+.song .b-del{background:none;border:0;color:#7d72a6;padding:2px 5px}
+.song .b-del:hover{color:var(--bad)}
+.more{display:block;width:100%;margin:8px 0}
+.empty{color:var(--muted);text-align:center;padding:24px 10px;line-height:1.6}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.card h4{margin:0 0 6px;font-size:15px}
+.card p{margin:4px 0 8px;font-size:13.5px;color:var(--muted)}
+.card .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.card .ok{color:var(--ok)}
+.btn-main{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:700}
+.btn-main:hover{background:#ff6ab3}
+#stagewrap{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+#stage{position:relative;flex:1;min-height:200px;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+#media{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#audioBg{position:absolute;inset:0;display:none;background:radial-gradient(ellipse at 30% 20%,#3a1458,#0c0820 70%)}
+#audioBg canvas{position:absolute;left:0;bottom:0;width:100%;height:45%;opacity:.55}
+#audioBg .at{position:absolute;top:9%;left:0;right:0;text-align:center;padding:0 20px}
+#audioBg .at div:first-child{font-size:clamp(22px,4vw,46px);font-weight:800;text-shadow:0 3px 18px rgba(255,79,163,.5)}
+#audioBg .at div:last-child{color:var(--muted);font-size:clamp(14px,1.8vw,22px);margin-top:4px}
+#plainLy{position:absolute;top:28%;bottom:8%;left:10%;right:10%;overflow:hidden;text-align:center;font-size:clamp(16px,2.2vw,28px);line-height:1.7;white-space:pre-line;color:#efe8ff;text-shadow:0 2px 6px #000;display:none;mask-image:linear-gradient(transparent,#000 15%,#000 85%,transparent)}
+#lyrics{position:absolute;left:0;right:0;bottom:6%;text-align:center;pointer-events:none;display:none;padding:0 4%}
+.ly{font-size:clamp(20px,3.6vw,48px);font-weight:800;line-height:1.35;-webkit-text-stroke:1px rgba(0,0,0,.6);paint-order:stroke fill;min-height:1.35em}
+.ly.cur{--p:0%;background:linear-gradient(90deg,var(--cyan) var(--p),#fff var(--p));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 3px #000)}
+.ly.nxt{color:#fff;opacity:.75;filter:drop-shadow(0 2px 3px #000);font-size:clamp(17px,3vw,40px)}
+#idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;background:radial-gradient(circle at 50% 40%,#2d1452,#0b0719 70%);overflow:hidden}
+#idle .mic{font-size:clamp(50px,9vw,110px);animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-12px) rotate(-6deg)}}
+#idle h2{margin:8px 0 4px;font-size:clamp(22px,3.5vw,42px);background:linear-gradient(90deg,var(--pink),var(--gold),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+#idle p{color:var(--muted);margin:4px 0;font-size:clamp(14px,1.6vw,19px)}
+#idle .note{position:absolute;font-size:28px;opacity:.25;animation:rise 9s linear infinite}
+@keyframes rise{from{transform:translateY(110%)}to{transform:translateY(-120%) rotate(40deg)}}
+.osd{position:absolute;background:rgba(10,6,25,.72);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;font-size:clamp(13px,1.4vw,18px);transition:opacity .5s;pointer-events:none}
+#songTitle{top:12px;left:12px;max-width:48%;opacity:0}
+#songTitle.show{opacity:1}
+#nextUp{top:12px;right:12px;max-width:46%;opacity:0;color:var(--gold)}
+#nextUp.show{opacity:1}
+#scoreBox{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,4,20,.82);cursor:pointer;text-align:center}
+#scoreBox .num{font-size:clamp(80px,16vw,200px);font-weight:900;background:linear-gradient(180deg,var(--gold),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+#scoreBox .msg{font-size:clamp(20px,3vw,38px);font-weight:700;margin-top:8px}
+#scoreBox .sub{color:var(--muted);margin-top:10px}
+@keyframes pop{from{transform:scale(.2);opacity:0}}
+#toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,14,44,.95);border:1px solid var(--line);border-radius:12px;padding:9px 14px;max-width:90%;text-align:center;display:none;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#toast a,#toast button{margin-left:6px}
+#toast a{color:var(--cyan)}
+#seekRow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+#seek{flex:1}
+.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center}
+.controls button{min-width:42px}
+.grp{display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px 6px}
+.grp span{font-size:13px;color:var(--muted);white-space:nowrap}
+.grp b{min-width:26px;text-align:center;font-variant-numeric:tabular-nums}
+.grp button{padding:4px 9px;min-width:30px}
+#btnPlay{font-size:20px;padding:5px 18px;background:var(--pink);border-color:var(--pink)}
+#btnRec.on{background:var(--bad);border-color:var(--bad);animation:pulse 1s infinite}
+#micPanel{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px}
+#micPanel[hidden]{display:none}
+#micPanel label{display:flex;align-items:center;gap:6px}
+#micPanel select{max-width:220px;padding:4px 6px}
+#micLevel{width:70px;height:8px;background:#120d26;border-radius:4px;overflow:hidden}
+#micLevel i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--gold),var(--bad))}
+#queue{padding:10px;gap:8px}
+#queue h3{margin:0;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+#queue h3 small{color:var(--muted);font-weight:400}
+.qtools{display:flex;flex-wrap:wrap;gap:5px}
+.qtools button{font-size:13px;padding:5px 8px}
+.qi{display:flex;align-items:center;gap:6px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.05)}
+.qi .n{width:22px;height:22px;flex:none;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.qi:first-child .n{background:var(--pink);color:#fff}
+.qi .meta{flex:1;min-width:0}
+.qi .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.qi .s{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qi button{padding:2px 7px;font-size:13px;border-radius:8px;flex:none}
+#nowBox{background:linear-gradient(90deg,rgba(255,79,163,.18),rgba(79,216,255,.08));border:1px solid rgba(255,79,163,.35);border-radius:10px;padding:7px 10px;font-size:13.5px}
+#nowBox:empty{display:none}
+#nowBox b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:16px;max-width:640px;width:calc(100% - 32px);padding:18px 20px}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h3{margin-top:0}
+dialog li{margin:5px 0}
+dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:13px}
+/* toàn màn hình */
+#stagewrap:fullscreen{background:#000;padding:0;gap:0}
+#stagewrap:fullscreen #stage{border:0;border-radius:0}
+#stagewrap:fullscreen #seekRow,#stagewrap:fullscreen .controls,#stagewrap:fullscreen #micPanel{position:absolute;left:0;right:0;z-index:6;background:rgba(10,6,25,.85);padding:8px 14px;transition:opacity .4s}
+#stagewrap:fullscreen .controls{bottom:0;border-radius:0}
+#stagewrap:fullscreen #seekRow{bottom:52px}
+#stagewrap:fullscreen #micPanel{bottom:86px;border-radius:0;border:0}
+#stagewrap.hideui #seekRow,#stagewrap.hideui .controls,#stagewrap.hideui #micPanel{opacity:0;pointer-events:none}
+#stagewrap.hideui{cursor:none}
+@media (max-width:1100px){
+  main{grid-template-columns:1fr 1fr;grid-template-rows:minmax(260px,46vh) 1fr;overflow-y:auto}
+  #stagewrap{grid-column:1 / -1}
+}
+@media (max-width:700px){
+  body{overflow:auto;height:auto}
+  main{display:flex;flex-direction:column;padding:8px}
+  #stage{min-height:56vw;flex:none;aspect-ratio:16/9}
+  #stagewrap{order:-1}
+  #lib{max-height:none;min-height:60vh}
+  #netStat{font-size:11px;max-width:90px;text-align:right}
+  #queue{min-height:200px}
+  .brand{font-size:17px}
+  header{padding:8px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🎤 <b>Phòng Hát Karaoke</b></div>
+  <span id="netStat"></span>
+  <button id="btnInstall" hidden>⬇ Cài vào máy</button>
+  <button id="btnHelp">❓ Hướng dẫn</button>
+</header>
+
+<main>
+  <section id="lib" class="panel">
+    <div class="searchbar">
+      <input id="q" type="search" placeholder="Tìm tên bài, ca sĩ, mã số…" autocomplete="off">
+      <button id="btnVoice" title="Tìm bằng giọng nói (phím V)">🎙️</button>
+    </div>
+    <div id="voiceHint"></div>
+    <div id="permBar" hidden><span id="permText"></span><button id="btnReperm">Mở lại</button></div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="all" class="on">Tất cả</button>
+      <button data-tab="fav">★ Yêu thích</button>
+      <button data-tab="recent">Đã hát</button>
+      <button data-tab="lists">📋 Danh sách</button>
+      <button data-tab="source">＋ Thêm bài</button>
+    </nav>
+    <div id="libInfo"><span id="libCount"></span><button id="btnRandom" title="Bốc ngẫu nhiên một bài vào hàng chờ">🎲 Bốc thăm</button></div>
+    <div id="libList" class="list"></div>
+  </section>
+
+  <section id="stagewrap">
+    <div id="stage">
+      <video id="media" playsinline preload="auto"></video>
+      <div id="audioBg"><canvas id="viz"></canvas><div class="at"><div id="abTitle"></div><div id="abArtist"></div></div></div>
+      <div id="plainLy"></div>
+      <div id="lyrics"><div class="ly cur" id="ly1"></div><div class="ly nxt" id="ly2"></div></div>
+      <div id="idle">
+        <div class="mic">🎤</div>
+        <h2>Mời chọn bài</h2>
+        <p id="idleSub">Gõ tên bài vào ô tìm kiếm, bấm ＋ để thêm vào hàng chờ</p>
+      </div>
+      <div id="songTitle" class="osd"></div>
+      <div id="nextUp" class="osd"></div>
+      <div id="scoreBox"><div class="num" id="scoreNum">0</div><div class="msg" id="scoreMsg"></div><div class="sub" id="scoreSub">Bấm để sang bài tiếp</div></div>
+      <div id="toast"></div>
+    </div>
+    <div id="seekRow"><span id="tCur">0:00</span><input type="range" id="seek" min="0" max="1000" value="0"><span id="tDur">0:00</span></div>
+    <div class="controls">
+      <button id="btnRestart" title="Hát lại từ đầu">⏮</button>
+      <button id="btnPlay" title="Phát / Tạm dừng (phím cách)">▶</button>
+      <button id="btnNext" title="Qua bài (phím N)">⏭</button>
+      <div class="grp" title="Âm lượng nhạc"><span>🔊</span><input type="range" id="vol" min="0" max="100" value="100" style="width:80px"></div>
+      <div class="grp" title="Đổi tông (phím [ và ])"><span>Tông</span><button id="keyDown">♭</button><b id="keyVal">0</b><button id="keyUp">♯</button></div>
+      <div class="grp" title="Nhanh / chậm"><span>Nhịp</span><button id="spdDown">−</button><b id="spdVal">100%</b><button id="spdUp">+</button></div>
+      <button id="btnVocal" title="Bớt giọng ca sĩ (dùng cho bài hát gốc, không phải bản beat)">🗣 Bớt lời</button>
+      <button id="btnMic" title="Bật micro, có vang (phím M)">🎤 Micro</button>
+      <button id="btnRec" title="Thu âm giọng hát + nhạc">⏺ Thu âm</button>
+      <button id="btnScore" title="Chấm điểm khi hết bài">💯 Chấm điểm</button>
+      <button id="btnFull" title="Toàn màn hình (phím F)">⛶</button>
+    </div>
+    <div id="micPanel" hidden>
+      <label>Micro <select id="micSel"></select></label>
+      <label>Âm lượng <input type="range" id="micVol" min="0" max="150" value="80" style="width:80px"></label>
+      <label>Vang <input type="range" id="echo" min="0" max="100" value="35" style="width:80px"></label>
+      <label><input type="checkbox" id="monitor" checked> Phát giọng ra loa</label>
+      <span id="micLevel"><i></i></span>
+    </div>
+  </section>
+
+  <section id="queue" class="panel">
+    <h3>Hàng chờ <small id="qCount"></small></h3>
+    <div id="nowBox"></div>
+    <div class="qtools">
+      <button id="btnSaveList" title="Lưu các bài đang chờ thành danh sách để lần sau gọi lại">💾 Lưu danh sách</button>
+      <button id="btnShuffle">🔀 Trộn</button>
+      <button id="btnClearQ">🗑 Xóa hết</button>
+    </div>
+    <div id="qList" class="list"></div>
+  </section>
+</main>
+
+<dialog id="dlgHelp">
+  <h3>🎤 Hướng dẫn nhanh</h3>
+  <ol>
+    <li><b>Lần đầu:</b> bấm <b>＋ Thêm bài</b> → <b>Chọn thư mục bài hát</b> (thư mục chứa các tệp karaoke .mp4, .mkv, .webm, .mp3…). Ứng dụng nhớ thư mục, lần sau chỉ cần bấm <b>Mở lại</b>.</li>
+    <li>Trên điện thoại / máy tính bảng: dùng <b>Chép bài vào ứng dụng</b> — bài được cất luôn trong ứng dụng, hát được khi không có mạng.</li>
+    <li><b>Tìm bài:</b> gõ tên không cần dấu (vd: <i>dem lanh</i>), mã số, tên ca sĩ, hoặc bấm 🎙️ rồi nói tên bài (tìm bằng giọng nói cần có mạng).</li>
+    <li>Bấm vào bài hoặc <b>＋</b> để cho vào hàng chờ, <b>▶</b> để hát ngay. Trong hàng chờ bấm <b>⤒</b> để ưu tiên lên đầu.</li>
+    <li><b>💾 Lưu danh sách</b> để cất các bài đã chọn; mở lại ở thẻ <b>📋 Danh sách</b>. Bấm <b>☆</b> để đưa bài vào Yêu thích.</li>
+    <li><b>Tông ♭ ♯</b> hạ/nâng giọng; <b>🗣 Bớt lời</b> làm nhỏ giọng ca sĩ với bài hát gốc (mp3); <b>🎤 Micro</b> có vang; <b>⏺ Thu âm</b> lưu bản hát về máy.</li>
+    <li>Lời bài hát: đặt tệp <b>.lrc</b> (lời chạy theo nhạc) hoặc <b>.txt</b> cùng tên, cùng thư mục với tệp nhạc.</li>
+    <li>Cài vào máy: bấm <b>⬇ Cài vào máy</b> (hoặc menu Chrome → Cài đặt ứng dụng) để mở như phần mềm riêng, không cần mạng.</li>
+  </ol>
+  <p><b>Phím tắt:</b> <kbd>Cách</kbd> phát/dừng · <kbd>N</kbd> qua bài · <kbd>F</kbd> toàn màn hình · <kbd>[</kbd> <kbd>]</kbd> tông · <kbd>M</kbd> micro · <kbd>V</kbd> tìm bằng giọng nói · <kbd>/</kbd> ô tìm kiếm</p>
+  <p style="color:var(--muted);font-size:13px">Ứng dụng không có quảng cáo, không gửi bài hát lên mạng. Mọi thứ nằm trên máy của thầy.</p>
+  <form method="dialog" style="text-align:right"><button class="btn-main">Đã hiểu</button></form>
+</dialog>
+
+<input type="file" id="fileIn" multiple accept="video/*,audio/*,.mkv,.lrc,.txt" hidden>
+<input type="file" id="folderIn" webkitdirectory multiple hidden>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const media = $('#media');
+const MEDIA_EXT = {mp4:'video',m4v:'video',webm:'video',mkv:'video',mov:'video',ogv:'video',mp3:'audio',m4a:'audio',aac:'audio',ogg:'audio',oga:'audio',opus:'audio',wav:'audio',flac:'audio',wma:'audio'};
+const LYR_EXT = {lrc:1, txt:1};
+
+/* ---------- lưu trữ ---------- */
+function load(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const DB = {
+  db: null,
+  open(){ return new Promise((res, rej) => {
+    const r = indexedDB.open('karaoke_v1', 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('songs', {keyPath:'id'}); d.createObjectStore('blobs'); d.createObjectStore('kv'); };
+    r.onsuccess = () => { this.db = r.result; res(); };
+    r.onerror = () => rej(r.error);
+  }); },
+  run(stores, mode, fn){ return new Promise((res, rej) => {
+    const t = this.db.transaction(stores, mode); let out;
+    const rq = fn(t); if (rq) rq.onsuccess = () => out = rq.result;
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  }); },
+  get(st, k){ return this.run(st, 'readonly', t => t.objectStore(st).get(k)); },
+  put(st, v, k){ return this.run(st, 'readwrite', t => k === undefined ? t.objectStore(st).put(v) : t.objectStore(st).put(v, k)); },
+  del(st, k){ return this.run(st, 'readwrite', t => { t.objectStore(st).delete(k); }); },
+  all(st){ return this.run(st, 'readonly', t => t.objectStore(st).getAll()); },
+};
+
+let songs = new Map();
+let queue = load('kq_queue', []);
+let lists = load('kq_lists', []);
+let S = Object.assign({vol:100, score:true, micVol:80, echo:35, monitor:true, micId:''}, load('kq_set', {}));
+let dirHandle = null, dirOK = false;
+let current = null, curKind = '', tab = 'all', showLimit = 200;
+let semis = 0, speed = 1, vocalOn = false;
+
+/* ---------- tiện ích ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const stripExt = n => { const i = n.lastIndexOf('.'); return i > 0 ? n.slice(0, i) : n; };
+const extOf = n => { const i = n.lastIndexOf('.'); return i > 0 ? n.slice(i + 1).toLowerCase() : ''; };
+const fmt = t => { if (!isFinite(t)) return '0:00'; t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+let toastTimer;
+function toast(html, ms = 3500){
+  const el = $('#toast'); el.innerHTML = html; el.style.display = 'block';
+  clearTimeout(toastTimer); if (ms) toastTimer = setTimeout(() => el.style.display = 'none', ms);
+}
+
+function parseName(fname){
+  let base = stripExt(fname).replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
+  let code = '';
+  const m = base.match(/^(\d{3,6})\s*[-.)\]]?\s+(.+)$/);
+  if (m){ code = m[1]; base = m[2]; }
+  const n = norm(base);
+  let tone = '';
+  if (/tone ?nu\b|giong nu/.test(n)) tone = 'Tone Nữ';
+  else if (/tone ?nam\b|giong nam/.test(n)) tone = 'Tone Nam';
+  else if (/song ca/.test(n)) tone = 'Song ca';
+  let title = base, artist = '';
+  const parts = base.split(/\s+[-–—|]\s+/);
+  if (parts.length > 1){ title = parts[0]; artist = parts.slice(1).join(' - '); }
+  const JUNK = /(karaoke|beat|full ?hd|hd|4k|1080p|720p|chuẩn|chuan|official|mv|tone|song ca|giọng|giong)/i;
+  const clean = s => s.replace(/[\[(]([^\])]*)[\])]/g, (m, inner) => JUNK.test(inner) ? ' ' : m)
+                      .replace(/(^|[^\p{L}])(tone|giọng|giong)\s*(nam|nữ|nu)(?=[^\p{L}]|$)/giu, ' ')
+                      .replace(/(^|[^\p{L}])(karaoke|beat|full ?hd|hd|4k|1080p|720p|official|mv)(?=[^\p{L}]|$)/giu, ' ')
+                      .replace(/[\[(]\s*[\])]/g, '')
+                      .replace(/\s+/g, ' ').replace(/^[\s\-–|]+|[\s\-–|]+$/g, '').trim();
+  title = clean(title) || base; artist = clean(artist);
+  return {title, artist, code, tone, fname};
+}
+
+/* ---------- thư viện ---------- */
+async function loadLibrary(){
+  const all = await DB.all('songs');
+  songs = new Map(all.map(s => [s.id, s]));
+  queue = queue.filter(id => songs.has(id));
+  dirHandle = await DB.get('kv', 'dir') || null;
+  if (dirHandle){
+    try { dirOK = (await dirHandle.queryPermission({mode:'read'})) === 'granted'; } catch(e){ dirOK = false; }
+  }
+  updatePermBar(); renderLib(); renderQueue();
+}
+function updatePermBar(){
+  const need = dirHandle && !dirOK && [...songs.values()].some(s => s.src === 'dir');
+  $('#permBar').hidden = !need;
+  if (need) $('#permText').textContent = `Thư mục “${dirHandle.name}” cần được cho phép lại.`;
+}
+async function ensureDir(){
+  if (!dirHandle) return false;
+  if (dirOK) return true;
+  try {
+    let p = await dirHandle.queryPermission({mode:'read'});
+    if (p !== 'granted') p = await dirHandle.requestPermission({mode:'read'});
+    dirOK = p === 'granted';
+  } catch(e){ dirOK = false; }
+  updatePermBar();
+  return dirOK;
+}
+async function pickFolder(){
+  if (!window.showDirectoryPicker){ toast('Trình duyệt này không liên kết được thư mục. Thầy dùng <b>Chép bài vào ứng dụng</b> nhé.'); return; }
+  try {
+    const h = await window.showDirectoryPicker({id:'karaoke', mode:'read'});
+    dirHandle = h; dirOK = true;
+    await DB.put('kv', h, 'dir');
+    await scanDir();
+  } catch(e){ if (e.name !== 'AbortError') toast('Không mở được thư mục: ' + esc(e.message)); }
+}
+async function scanDir(){
+  if (!(await ensureDir())) return;
+  toast('⏳ Đang quét thư mục bài hát…', 0);
+  const found = [], lyr = new Map();
+  async function walk(h, prefix, depth){
+    for await (const [name, e] of h.entries()){
+      if (e.kind === 'directory'){ if (depth < 8 && !name.startsWith('.') && !name.startsWith('$')) await walk(e, prefix + name + '/', depth + 1); }
+      else {
+        const ext = extOf(name), p = prefix + name;
+        if (MEDIA_EXT[ext]) found.push({p, name, ext});
+        else if (LYR_EXT[ext]) lyr.set(stripExt(p).toLowerCase(), p);
+      }
+    }
+  }
+  try { await walk(dirHandle, '', 0); }
+  catch(e){ toast('Lỗi khi quét: ' + esc(e.message)); return; }
+  const old = [...songs.values()].filter(s => s.src === 'dir');
+  const oldMap = new Map(old.map(s => [s.id, s]));
+  const now = Date.now();
+  const recs = found.map(f => {
+    const id = 'd:' + f.p, o = oldMap.get(id) || {};
+    return Object.assign(parseName(f.name), {id, src:'dir', path:f.p, kind:MEDIA_EXT[f.ext],
+      lrcPath: lyr.get(stripExt(f.p).toLowerCase()) || null,
+      fav:!!o.fav, plays:o.plays || 0, last:o.last || 0, added:o.added || now});
+  });
+  await DB.run('songs', 'readwrite', t => { const st = t.objectStore('songs'); old.forEach(s => st.delete(s.id)); recs.forEach(r => st.put(r)); });
+  old.forEach(s => songs.delete(s.id)); recs.forEach(r => songs.set(r.id, r));
+  queue = queue.filter(id => songs.has(id)); saveQueue();
+  updatePermBar(); renderLib(); renderQueue();
+  toast(`✅ Đã tìm thấy <b>${recs.length}</b> bài trong thư mục “${esc(dirHandle.name)}”.`);
+}
+async function importFiles(fileList){
+  const files = [...fileList]; if (!files.length) return;
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch(e){}
+  const lyrics = new Map();
+  for (const f of files) if (LYR_EXT[extOf(f.name)]) lyrics.set(stripExt(f.name).toLowerCase(), await f.text());
+  const mediaFiles = files.filter(f => MEDIA_EXT[extOf(f.name)]);
+  const have = new Set([...songs.values()].filter(s => s.src === 'idb').map(s => s.fname + '|' + s.size));
+  let done = 0, skip = 0, fail = 0;
+  for (const f of mediaFiles){
+    if (have.has(f.name + '|' + f.size)){ skip++; continue; }
+    toast(`⏳ Đang chép bài ${done + skip + fail + 1}/${mediaFiles.length}: ${esc(f.name)}`, 0);
+    const id = 'f:' + uid();
+    const rec = Object.assign(parseName(f.name), {id, src:'idb', kind:MEDIA_EXT[extOf(f.name)], size:f.size,
+      lyrics: lyrics.get(stripExt(f.name).toLowerCase()) || null, fav:false, plays:0, last:0, added:Date.now()});
+    try {
+      await DB.run(['blobs', 'songs'], 'readwrite', t => { t.objectStore('blobs').put(f, id); t.objectStore('songs').put(rec); });
+      songs.set(id, rec); done++;
+    } catch(e){ fail++; console.error(e); if (e && e.name === 'QuotaExceededError'){ toast('❌ Bộ nhớ máy đã đầy, dừng chép.'); break; } }
+  }
+  // tệp lời rời: gắn vào bài đã có cùng tên
+  let attached = 0;
+  if (!mediaFiles.length && lyrics.size){
+    for (const s of songs.values()){
+      const k = stripExt(s.fname || '').toLowerCase();
+      if (lyrics.has(k)){ s.lyrics = lyrics.get(k); await DB.put('songs', s); attached++; }
+    }
+  }
+  renderLib(); renderSource();
+  let msg = `✅ Đã chép <b>${done}</b> bài vào ứng dụng.`;
+  if (skip) msg += ` Bỏ qua ${skip} bài đã có.`;
+  if (fail) msg += ` ${fail} bài lỗi.`;
+  if (attached) msg = `✅ Đã gắn lời cho ${attached} bài.`;
+  toast(msg, 5000);
+}
+async function deleteSong(id){
+  const s = songs.get(id); if (!s || s.src !== 'idb') return;
+  if (!confirm(`Xóa bài “${s.title}” khỏi ứng dụng?`)) return;
+  await DB.run(['blobs', 'songs'], 'readwrite', t => { t.objectStore('blobs').delete(id); t.objectStore('songs').delete(id); });
+  songs.delete(id); queue = queue.filter(x => x !== id); saveQueue();
+  renderLib(); renderQueue();
+}
+async function deleteAllImported(){
+  const ids = [...songs.values()].filter(s => s.src === 'idb').map(s => s.id);
+  if (!ids.length || !confirm(`Xóa toàn bộ ${ids.length} bài đã chép vào ứng dụng? (Tệp gốc trên máy không bị ảnh hưởng)`)) return;
+  await DB.run(['blobs', 'songs'], 'readwrite', t => { ids.forEach(id => { t.objectStore('blobs').delete(id); t.objectStore('songs').delete(id); }); });
+  ids.forEach(id => songs.delete(id)); queue = queue.filter(id => songs.has(id)); saveQueue();
+  renderLib(); renderQueue();
+}
+async function unlinkFolder(){
+  if (!confirm('Bỏ liên kết thư mục? Các bài trong thư mục sẽ không còn trong danh sách (tệp trên máy vẫn giữ nguyên).')) return;
+  const ids = [...songs.values()].filter(s => s.src === 'dir').map(s => s.id);
+  await DB.run(['songs', 'kv'], 'readwrite', t => { ids.forEach(id => t.objectStore('songs').delete(id)); t.objectStore('kv').delete('dir'); });
+  ids.forEach(id => songs.delete(id)); dirHandle = null; dirOK = false;
+  queue = queue.filter(id => songs.has(id)); saveQueue();
+  updatePermBar(); renderLib(); renderQueue();
+}
+async function getFile(s){
+  if (s.src === 'idb') return await DB.get('blobs', s.id);
+  if (!(await ensureDir())) throw new Error('perm');
+  const parts = s.path.split('/'); let h = dirHandle;
+  for (let i = 0; i < parts.length - 1; i++) h = await h.getDirectoryHandle(parts[i]);
+  return await (await h.getFileHandle(parts[parts.length - 1])).getFile();
+}
+async function getLyricsText(s){
+  if (s.lyrics) return s.lyrics;
+  if (s.src === 'dir' && s.lrcPath){
+    try {
+      const parts = s.lrcPath.split('/'); let h = dirHandle;
+      for (let i = 0; i < parts.length - 1; i++) h = await h.getDirectoryHandle(parts[i]);
+      return await (await (await h.getFileHandle(parts[parts.length - 1])).getFile()).text();
+    } catch(e){}
+  }
+  return '';
+}
+
+/* ---------- tìm kiếm + hiển thị thư viện ---------- */
+function searchKey(s){ return s._k || (s._k = norm([s.title, s.artist, s.code, s.tone, s.fname].join(' '))); }
+function results(){
+  const q = norm($('#q').value);
+  let arr = [...songs.values()];
+  if (tab === 'fav') arr = arr.filter(s => s.fav);
+  if (tab === 'recent') arr = arr.filter(s => s.last).sort((a, b) => b.last - a.last).slice(0, 150);
+  if (q){
+    const toks = q.split(' ');
+    const qt = q;
+    arr = arr.filter(s => { const k = searchKey(s); return toks.every(t => k.includes(t)); })
+      .map(s => { const t = norm(s.title); let sc = 0; if (t === qt) sc = 10; else if (t.startsWith(qt)) sc = 6; else if (t.includes(qt)) sc = 4; else if (searchKey(s).includes(qt)) sc = 2; if (s.code === qt) sc = 12; return [sc + (s.fav ? .5 : 0), s]; })
+      .sort((a, b) => b[0] - a[0] || a[1].title.localeCompare(b[1].title, 'vi')).map(x => x[1]);
+  } else if (tab !== 'recent'){
+    arr.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+  }
+  return arr;
+}
+function songRow(s){
+  const tag = s.tone ? `<span class="tag ${s.tone === 'Tone Nữ' ? 'nu' : s.tone === 'Tone Nam' ? 'nam' : ''}">${esc(s.tone)}</span>` : '';
+  const sub = [s.artist && esc(s.artist), s.code && '#' + esc(s.code), s.kind === 'audio' ? '🎵' : '🎬', (s.lyrics || s.lrcPath) ? 'có lời' : '', s.plays ? `đã hát ${s.plays} lần` : ''].filter(Boolean).join(' · ');
+  return `<div class="song${s.id === current ? ' playing' : ''}" data-id="${esc(s.id)}">
+    <button class="fav${s.fav ? ' yes' : ''}" title="Yêu thích">${s.fav ? '★' : '☆'}</button>
+    <div class="meta"><div class="t">${esc(s.title)}${tag}</div><div class="s">${sub}</div></div>
+    ${s.src === 'idb' ? '<button class="b-del" title="Xóa khỏi ứng dụng">✕</button>' : ''}
+    <button class="b-now" title="Hát ngay">▶</button>
+    <button class="b-add" title="Thêm vào hàng chờ">＋</button>
+  </div>`;
+}
+function renderLib(){
+  if (tab === 'lists') return renderLists();
+  if (tab === 'source') return renderSource();
+  const arr = results();
+  const total = songs.size;
+  $('#libCount').textContent = $('#q').value.trim() || tab !== 'all' ? `${arr.length} bài` : `${total} bài trong thư viện`;
+  const el = $('#libList');
+  if (!total){
+    el.innerHTML = `<div class="empty">Chưa có bài nào.<br>Bấm <b>＋ Thêm bài</b> để chọn thư mục karaoke trên máy<br>hoặc chép bài vào ứng dụng.<br><br><button class="btn-main" onclick="setTab('source')">＋ Thêm bài ngay</button></div>`;
+    return;
+  }
+  if (!arr.length){
+    el.innerHTML = `<div class="empty">${tab === 'fav' && !$('#q').value ? 'Chưa có bài yêu thích. Bấm ☆ cạnh tên bài để thêm.' : tab === 'recent' && !$('#q').value ? 'Chưa hát bài nào.' : 'Không tìm thấy bài phù hợp.<br>Thử gõ ít chữ hơn, không cần dấu.'}</div>`;
+    return;
+  }
+  el.innerHTML = arr.slice(0, showLimit).map(songRow).join('') +
+    (arr.length > showLimit ? `<button class="more" id="btnMore">Hiện thêm (${arr.length - showLimit} bài nữa)</button>` : '');
+}
+function renderLists(){
+  $('#libCount').textContent = `${lists.length} danh sách đã lưu`;
+  const el = $('#libList');
+  let h = `<div class="card"><h4>📋 Danh sách bài đã lưu</h4><p>Chọn bài vào hàng chờ rồi bấm <b>💾 Lưu danh sách</b> (bên phải) để cất lại, lần sau gọi ra hát ngay.</p></div>`;
+  if (!lists.length) h += `<div class="empty">Chưa có danh sách nào.</div>`;
+  lists.forEach((l, i) => {
+    const ok = l.ids.filter(id => songs.has(id));
+    const names = ok.slice(0, 4).map(id => esc(songs.get(id).title)).join(', ') + (ok.length > 4 ? '…' : '');
+    h += `<div class="card" data-li="${i}"><h4>${esc(l.name)} <small style="color:var(--muted);font-weight:400">· ${ok.length} bài</small></h4>
+      <p>${names || '<i>Các bài trong danh sách không còn trong thư viện</i>'}</p>
+      <div class="row"><button class="btn-main" data-act="play">▶ Hát danh sách này</button><button data-act="append">＋ Thêm vào cuối hàng chờ</button><button data-act="rename">✎ Đổi tên</button><button data-act="del">🗑 Xóa</button></div></div>`;
+  });
+  el.innerHTML = h;
+}
+async function renderSource(){
+  if (tab !== 'source') return;
+  const nDir = [...songs.values()].filter(s => s.src === 'dir').length;
+  const nIdb = [...songs.values()].filter(s => s.src === 'idb').length;
+  $('#libCount').textContent = 'Thêm bài hát';
+  let used = '';
+  try { const e = await navigator.storage.estimate(); used = `Đang dùng ${(e.usage / 1073741824).toFixed(2)} GB / còn trống khoảng ${((e.quota - e.usage) / 1073741824).toFixed(1)} GB.`; } catch(e){}
+  const canDir = !!window.showDirectoryPicker;
+  $('#libList').innerHTML = `
+  <div class="card"><h4>📁 Liên kết thư mục bài hát trên máy</h4>
+    <p>Dành cho máy tính (Chrome, Edge, Cốc Cốc). Không chép tệp, không tốn thêm ổ đĩa. Thư mục con cũng được quét.</p>
+    ${dirHandle ? `<p class="ok">Đang liên kết: <b>${esc(dirHandle.name)}</b> — ${nDir} bài${dirOK ? '' : ' (cần bấm Mở lại)'}</p>` : ''}
+    <div class="row">${canDir ? `<button class="btn-main" id="btnPick">${dirHandle ? 'Đổi thư mục' : 'Chọn thư mục bài hát'}</button>${dirHandle ? '<button id="btnRescan">🔄 Quét lại</button><button id="btnUnlink">Bỏ liên kết</button>' : ''}` : '<i style="color:var(--muted)">Trình duyệt này không hỗ trợ — dùng cách bên dưới.</i>'}</div></div>
+  <div class="card"><h4>📥 Chép bài vào ứng dụng</h4>
+    <p>Dùng được cả trên điện thoại, máy tính bảng. Bài được cất trong ứng dụng, mở ra là hát, không cần mạng. ${used}</p>
+    <p class="ok">${nIdb ? `Đã chép ${nIdb} bài.` : ''}</p>
+    <div class="row"><button class="btn-main" id="btnFiles">Chọn tệp bài hát…</button><button id="btnFolderCopy">Chép cả thư mục…</button>${nIdb ? '<button id="btnDelAll">🗑 Xóa các bài đã chép</button>' : ''}</div></div>
+  <div class="card"><h4>💡 Lưu ý</h4>
+    <p>• Tệp phát được: <b>.mp4 .webm .mkv .mov</b> (video karaoke có sẵn chữ) và <b>.mp3 .m4a .wav .ogg .flac</b> (nhạc beat). Tệp <b>.avi .vob .dat .wmv</b> cũ cần đổi sang .mp4 trước.</p>
+    <p>• Đặt tên tệp kiểu <b>Tên bài - Ca sĩ.mp4</b> hoặc <b>51234 Tên bài.mp4</b> (có mã số) để tìm cho dễ. Chữ “Tone Nam/Tone Nữ” trong tên sẽ hiện thành nhãn.</p>
+    <p>• Lời chạy theo nhạc: thêm tệp <b>.lrc</b> cùng tên với tệp nhạc (vd: <i>Đêm Lạnh.mp3</i> + <i>Đêm Lạnh.lrc</i>). Có thể chọn riêng các tệp .lrc ở nút “Chọn tệp” để gắn vào bài đã chép.</p>
+  </div>`;
+  const on = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = fn; };
+  on('btnPick', pickFolder); on('btnRescan', scanDir); on('btnUnlink', unlinkFolder);
+  on('btnFiles', () => $('#fileIn').click()); on('btnFolderCopy', () => $('#folderIn').click()); on('btnDelAll', deleteAllImported);
+}
+function setTab(t){
+  tab = t; showLimit = 200;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $('#btnRandom').style.visibility = (t === 'lists' || t === 'source') ? 'hidden' : 'visible';
+  renderLib();
+}
+
+/* ---------- hàng chờ ---------- */
+function saveQueue(){ save('kq_queue', queue); }
+function addQueue(id, front){
+  if (!songs.has(id)) return;
+  if (front) queue.unshift(id); else queue.push(id);
+  saveQueue(); renderQueue();
+  const s = songs.get(id);
+  if (!current && !media.src) toast(`Đã thêm “${esc(s.title)}”. Bấm ▶ để bắt đầu hát.`);
+  else toast(`➕ Đã thêm “${esc(s.title)}” vào hàng chờ (thứ ${front ? 1 : queue.length}).`, 2200);
+}
+function renderQueue(){
+  $('#qCount').textContent = queue.length ? `${queue.length} bài` : '';
+  const cs = current && songs.get(current);
+  $('#nowBox').innerHTML = cs ? `Đang hát<b>${esc(cs.title)}</b>` : '';
+  $('#qList').innerHTML = queue.length ? queue.map((id, i) => {
+    const s = songs.get(id); if (!s) return '';
+    return `<div class="qi" data-i="${i}"><span class="n">${i + 1}</span><div class="meta"><div class="t">${esc(s.title)}</div><div class="s">${esc([s.artist, s.tone].filter(Boolean).join(' · '))}</div></div>
+      ${i ? '<button data-act="top" title="Ưu tiên lên đầu">⤒</button>' : ''}<button data-act="now" title="Hát ngay">▶</button><button data-act="rm" title="Bỏ khỏi hàng chờ">✕</button></div>`;
+  }).join('') : `<div class="empty">Hàng chờ đang trống.<br>Bấm vào tên bài để thêm.</div>`;
+  const nx = queue[0] && songs.get(queue[0]);
+  $('#nextUp').innerHTML = nx ? `Bài tiếp: <b>${esc(nx.title)}</b>` : '';
+  $('#nextUp').classList.toggle('show', !!nx && !!current);
+  $('#idleSub').innerHTML = !songs.size ? 'Bấm <b>＋ Thêm bài</b> để chọn thư mục karaoke' : queue.length ? `Có ${queue.length} bài đang chờ — bấm <b>▶</b> để bắt đầu` : 'Gõ tên bài vào ô tìm kiếm, bấm <b>＋</b> để thêm vào hàng chờ';
+  document.querySelectorAll('.song.playing').forEach(e => e.classList.remove('playing'));
+  if (current) { const el = document.querySelector(`.song[data-id="${CSS.escape(current)}"]`); if (el) el.classList.add('playing'); }
+}
+
+/* ---------- âm thanh ---------- */
+let AC, srcNode, dryG, vrG, psNode, musicG, master, analyser, recDest;
+let micStream, micSrc, micG, micAn, monitorG, echoWet, revWet, micBus;
+const PS_CODE = `class PS extends AudioWorkletProcessor{
+static get parameterDescriptors(){return [{name:'ratio',defaultValue:1,minValue:0.25,maxValue:4,automationRate:'k-rate'}]}
+constructor(){super();this.N=16384;this.size=Math.round(sampleRate*0.07);this.b=[new Float32Array(this.N),new Float32Array(this.N)];this.w=0;this.p=0;}
+process(inputs,outputs,params){
+ const inp=inputs[0],out=outputs[0],n=out[0].length,r=params.ratio[0],N=this.N,size=this.size,b0=this.b[0],b1=this.b[1];
+ const i0=inp&&inp[0]?inp[0]:null,i1=inp&&inp[1]?inp[1]:i0,o0=out[0],o1=out[1]||null;
+ const bypass=Math.abs(r-1)<1e-3,step=(1-r)/size;
+ for(let k=0;k<n;k++){
+  const x0=i0?i0[k]:0,x1=i1?i1[k]:0;b0[this.w]=x0;b1[this.w]=x1;
+  if(bypass){o0[k]=x0;if(o1)o1[k]=x1;}
+  else{
+   let p=this.p+step;p-=Math.floor(p);this.p=p;let p2=p+0.5;if(p2>=1)p2-=1;
+   const g1=Math.sin(Math.PI*p)**2,g2=1-g1;
+   let q1=this.w-(p*size+4);if(q1<0)q1+=N;let q2=this.w-(p2*size+4);if(q2<0)q2+=N;
+   const a=q1|0,fa=q1-a,a2=(a+1)%N,c=q2|0,fc=q2-c,c2=(c+1)%N;
+   o0[k]=(b0[a]*(1-fa)+b0[a2]*fa)*g1+(b0[c]*(1-fc)+b0[c2]*fc)*g2;
+   if(o1)o1[k]=(b1[a]*(1-fa)+b1[a2]*fa)*g1+(b1[c]*(1-fc)+b1[c2]*fc)*g2;
+  }
+  this.w=(this.w+1)%N;
+ }
+ return true;}}
+registerProcessor('pitch-shift',PS);`;
+async function ensureAudio(){
+  if (AC){ if (AC.state === 'suspended') await AC.resume(); return; }
+  AC = new (window.AudioContext || window.webkitAudioContext)({latencyHint:'interactive'});
+  srcNode = AC.createMediaElementSource(media);
+  dryG = AC.createGain(); vrG = AC.createGain(); vrG.gain.value = 0;
+  srcNode.connect(dryG);
+  // bớt lời: (Trái − Phải) + phần trầm ở giữa
+  const split = AC.createChannelSplitter(2), gL = AC.createGain(), gR = AC.createGain(); gR.gain.value = -1;
+  const side = AC.createGain(); side.channelCount = 1; side.channelCountMode = 'explicit';
+  const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 140;
+  srcNode.connect(split); split.connect(gL, 0); split.connect(gR, 1); gL.connect(side); gR.connect(side); side.connect(hp); hp.connect(vrG);
+  const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 160;
+  const bass = AC.createGain(); bass.channelCount = 1; bass.channelCountMode = 'explicit';
+  srcNode.connect(lp); lp.connect(bass); bass.connect(vrG);
+  const pre = AC.createGain(); dryG.connect(pre); vrG.connect(pre);
+  musicG = AC.createGain(); master = AC.createGain();
+  try {
+    const url = URL.createObjectURL(new Blob([PS_CODE], {type:'application/javascript'}));
+    await AC.audioWorklet.addModule(url);
+    psNode = new AudioWorkletNode(AC, 'pitch-shift', {numberOfInputs:1, numberOfOutputs:1, outputChannelCount:[2]});
+    pre.connect(psNode); psNode.connect(musicG);
+  } catch(e){ console.warn('Không có đổi tông', e); psNode = null; pre.connect(musicG); }
+  musicG.connect(master); master.connect(AC.destination);
+  analyser = AC.createAnalyser(); analyser.fftSize = 256; master.connect(analyser);
+  recDest = AC.createMediaStreamDestination(); master.connect(recDest);
+  applyKey(); applyVocal();
+}
+function applyKey(){
+  $('#keyVal').textContent = (semis > 0 ? '+' : '') + semis;
+  if (psNode) psNode.parameters.get('ratio').value = Math.pow(2, semis / 12);
+}
+function applyVocal(){
+  $('#btnVocal').classList.toggle('on', vocalOn);
+  if (!AC) return;
+  const t = AC.currentTime;
+  dryG.gain.setTargetAtTime(vocalOn ? 0 : 1, t, .05);
+  vrG.gain.setTargetAtTime(vocalOn ? 1 : 0, t, .05);
+}
+function impulse(sec, decay){
+  const len = AC.sampleRate * sec, b = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++){ const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+  return b;
+}
+async function micOn(){
+  await ensureAudio();
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false, deviceId: S.micId ? {ideal:S.micId} : undefined}});
+  } catch(e){ toast('Không mở được micro: ' + esc(e.message)); return false; }
+  micSrc = AC.createMediaStreamSource(micStream);
+  micG = AC.createGain(); micBus = AC.createGain();
+  micSrc.connect(micG); micG.connect(micBus);
+  // vang: tiếng dội + vọng phòng
+  const dl = AC.createDelay(1); dl.delayTime.value = .13;
+  const fb = AC.createGain(); fb.gain.value = .32;
+  const elp = AC.createBiquadFilter(); elp.type = 'lowpass'; elp.frequency.value = 3200;
+  echoWet = AC.createGain();
+  micG.connect(dl); dl.connect(elp); elp.connect(fb); fb.connect(dl); elp.connect(echoWet); echoWet.connect(micBus);
+  const conv = AC.createConvolver(); conv.buffer = impulse(1.8, 3);
+  revWet = AC.createGain(); micG.connect(conv); conv.connect(revWet); revWet.connect(micBus);
+  monitorG = AC.createGain(); micBus.connect(monitorG); monitorG.connect(AC.destination);
+  micBus.connect(recDest);
+  micAn = AC.createAnalyser(); micAn.fftSize = 1024; micG.connect(micAn);
+  applyMic(); listMics();
+  return true;
+}
+function micOff(){
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  try { micSrc && micSrc.disconnect(); micBus && micBus.disconnect(); } catch(e){}
+  micStream = micSrc = micAn = null;
+}
+function applyMic(){
+  if (!micG) return;
+  micG.gain.value = S.micVol / 100;
+  echoWet.gain.value = S.echo / 100 * .7;
+  revWet.gain.value = S.echo / 100 * .5;
+  monitorG.gain.value = S.monitor ? 1 : 0;
+}
+async function listMics(){
+  try {
+    const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+    const cur = micStream && micStream.getAudioTracks()[0] && micStream.getAudioTracks()[0].getSettings().deviceId;
+    $('#micSel').innerHTML = devs.map((d, i) => `<option value="${esc(d.deviceId)}"${d.deviceId === cur ? ' selected' : ''}>${esc(d.label || 'Micro ' + (i + 1))}</option>`).join('');
+  } catch(e){}
+}
+
+/* ---------- phát bài ---------- */
+let lrc = null, plain = '', curUrl = null, osdTimer;
+function parseLyrics(text){
+  lrc = null; plain = '';
+  if (!text) return;
+  if (/\[\d{1,2}:\d{1,2}([.:]\d+)?\]/.test(text)){
+    let off = 0; const om = text.match(/\[offset:\s*([+-]?\d+)\]/i); if (om) off = +om[1] / 1000;
+    const lines = [];
+    text.split(/\r?\n/).forEach(row => {
+      const tags = [...row.matchAll(/\[(\d{1,2}):(\d{1,2}(?:[.:]\d+)?)\]/g)];
+      if (!tags.length) return;
+      const txt = row.replace(/\[[^\]]*\]/g, '').replace(/<\d+:\d+(?:\.\d+)?>/g, '').trim();
+      tags.forEach(m => lines.push({t: +m[1] * 60 + parseFloat(m[2].replace(':', '.')) - off, x: txt}));
+    });
+    lines.sort((a, b) => a.t - b.t);
+    lrc = lines.length ? lines : null;
+  } else plain = text.trim();
+}
+async function playSong(id){
+  const s = songs.get(id); if (!s) return;
+  await ensureAudio();
+  let file;
+  try { file = await getFile(s); }
+  catch(e){
+    if (e.message === 'perm'){ toast(`Cần cho phép mở lại thư mục “${esc(dirHandle && dirHandle.name)}”. Bấm <b>Mở lại</b> ở khung tìm bài rồi bấm ▶.`, 7000); queue.unshift(id); saveQueue(); renderQueue(); }
+    else { toast(`❌ Không tìm thấy tệp “${esc(s.fname)}”. Có thể tệp đã bị đổi tên hoặc xóa — thử 🔄 Quét lại.`, 6000); setTimeout(next, 2500); }
+    return;
+  }
+  if (!file){ toast('❌ Không đọc được bài này.'); return; }
+  hideScore();
+  if (curUrl) URL.revokeObjectURL(curUrl);
+  curUrl = URL.createObjectURL(file);
+  current = id; curKind = s.kind;
+  media.src = curUrl; media.playbackRate = speed; media.preservesPitch = true;
+  parseLyrics(await getLyricsText(s));
+  $('#idle').style.display = 'none';
+  $('#audioBg').style.display = s.kind === 'audio' ? 'block' : 'none';
+  $('#abTitle').textContent = s.title; $('#abArtist').textContent = [s.artist, s.tone].filter(Boolean).join(' · ');
+  $('#lyrics').style.display = lrc ? 'block' : 'none';
+  $('#plainLy').style.display = (!lrc && plain && s.kind === 'audio') ? 'block' : 'none';
+  $('#plainLy').textContent = plain; $('#plainLy').scrollTop = 0;
+  $('#ly1').textContent = ''; $('#ly2').textContent = '';
+  $('#songTitle').innerHTML = `🎤 <b>${esc(s.title)}</b>${s.artist ? ' — ' + esc(s.artist) : ''}`;
+  $('#songTitle').classList.add('show'); clearTimeout(osdTimer); osdTimer = setTimeout(() => { $('#songTitle').classList.remove('show'); $('#nextUp').classList.remove('show'); }, 7000);
+  s.plays = (s.plays || 0) + 1; s.last = Date.now(); delete s._k;
+  DB.put('songs', strip(s)).catch(() => {});
+  voiced = 0; frames = 0;
+  try { await media.play(); } catch(e){ console.warn(e); }
+  if (tab === 'recent') renderLib();
+  renderQueue();
+  document.title = '🎤 ' + s.title;
+}
+function strip(s){ const o = Object.assign({}, s); delete o._k; return o; }
+function next(){
+  hideScore();
+  if (!queue.length){ stopAll(); return; }
+  const id = queue.shift(); saveQueue(); playSong(id);
+}
+function stopAll(){
+  media.pause(); media.removeAttribute('src'); media.load();
+  if (curUrl){ URL.revokeObjectURL(curUrl); curUrl = null; }
+  current = null; lrc = null; plain = '';
+  $('#idle').style.display = 'flex'; $('#audioBg').style.display = 'none'; $('#lyrics').style.display = 'none'; $('#plainLy').style.display = 'none';
+  $('#btnPlay').textContent = '▶'; document.title = 'Phòng Hát Karaoke';
+  renderQueue();
+}
+media.addEventListener('play', () => $('#btnPlay').textContent = '⏸');
+media.addEventListener('pause', () => $('#btnPlay').textContent = '▶');
+media.addEventListener('loadedmetadata', () => $('#tDur').textContent = fmt(media.duration));
+media.addEventListener('timeupdate', () => {
+  $('#tCur').textContent = fmt(media.currentTime);
+  if (!seeking && media.duration) $('#seek').value = Math.round(media.currentTime / media.duration * 1000);
+});
+media.addEventListener('ended', () => { if (S.score) showScore(); else next(); });
+media.addEventListener('error', () => {
+  if (!current) return;
+  const s = songs.get(current);
+  toast(`❌ Máy không phát được tệp “${esc(s ? s.fname : '')}” (định dạng chưa hỗ trợ). Chuyển bài…`, 4000);
+  setTimeout(next, 2500);
+});
+let seeking = false;
+$('#seek').addEventListener('input', () => { seeking = true; if (media.duration) $('#tCur').textContent = fmt($('#seek').value / 1000 * media.duration); });
+$('#seek').addEventListener('change', () => { if (media.duration) media.currentTime = $('#seek').value / 1000 * media.duration; seeking = false; });
+
+/* ---------- chấm điểm ---------- */
+let voiced = 0, frames = 0, scoreTimer, nextTimer;
+setInterval(() => {
+  if (!micAn || media.paused || !current){ if (micAn) meter(); return; }
+  const r = meter(); frames++; if (r > .02) voiced++;
+}, 100);
+const micBuf = new Float32Array(1024);
+function meter(){
+  if (!micAn) return 0;
+  micAn.getFloatTimeDomainData(micBuf);
+  let s = 0; for (let i = 0; i < micBuf.length; i++) s += micBuf[i] * micBuf[i];
+  const r = Math.sqrt(s / micBuf.length);
+  $('#micLevel i').style.width = Math.min(100, r * 400) + '%';
+  return r;
+}
+function showScore(){
+  let sc, sub;
+  if (micAn && frames > 50){
+    const ratio = voiced / frames;
+    sc = Math.round(58 + 42 * Math.min(1, ratio / .5) + (Math.random() * 6 - 3));
+    sub = 'Điểm theo độ chăm hát vào micro';
+  } else { sc = Math.round(78 + Math.random() * 22); sub = 'Điểm vui (bật 🎤 Micro để chấm theo giọng hát)'; }
+  sc = Math.max(50, Math.min(100, sc));
+  const msg = sc >= 95 ? '🌟 Xuất sắc! Ca sĩ thực thụ!' : sc >= 88 ? '🎉 Hay quá! Vỗ tay nào!' : sc >= 78 ? '👏 Hát hay lắm!' : sc >= 68 ? '😊 Khá lắm, cố thêm chút nữa!' : '💪 Lần sau sẽ hay hơn!';
+  $('#scoreNum').textContent = sc; $('#scoreMsg').textContent = msg;
+  $('#scoreSub').textContent = sub + (queue.length ? ' · Bấm để sang bài tiếp' : '');
+  $('#scoreBox').style.display = 'flex';
+  applause(sc);
+  clearTimeout(nextTimer); nextTimer = setTimeout(next, 7000);
+}
+function hideScore(){ $('#scoreBox').style.display = 'none'; clearTimeout(nextTimer); }
+$('#scoreBox').onclick = () => next();
+function applause(sc){
+  if (!AC) return;
+  const dur = 2.6, len = AC.sampleRate * dur, b = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++){
+    const d = b.getChannelData(c);
+    for (let k = 0; k < 140 + sc; k++){ // từng tiếng vỗ tay
+      const st = Math.floor(Math.random() * (len - 4000) * Math.pow(Math.random(), .6)), L = 1500 + Math.random() * 1500, a = .35 + Math.random() * .4;
+      for (let i = 0; i < L; i++) d[st + i] += (Math.random() * 2 - 1) * a * Math.exp(-i / 260);
+    }
+    for (let i = 0; i < len; i++) d[i] *= Math.min(1, (len - i) / (AC.sampleRate * .8)) * .5;
+  }
+  const s = AC.createBufferSource(); s.buffer = b;
+  const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .6;
+  s.connect(f); f.connect(AC.destination); s.start();
+}
+
+/* ---------- thu âm ---------- */
+let recorder = null, recChunks = [], recName = '';
+function toggleRec(){
+  if (recorder){ recorder.stop(); return; }
+  if (!AC || !current){ toast('Chọn bài và bấm ▶ trước rồi mới thu âm nhé.'); return; }
+  if (!micAn) toast('Lưu ý: micro đang tắt nên chỉ thu được tiếng nhạc. Bấm 🎤 Micro để thu cả giọng hát.', 5000);
+  const mt = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg', 'audio/mp4'].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+  if (!mt){ toast('Trình duyệt này không hỗ trợ thu âm.'); return; }
+  recChunks = []; const s = songs.get(current); recName = (s ? s.title : 'karaoke') + ' - ' + new Date().toLocaleString('vi-VN').replace(/[/:]/g, '-');
+  recorder = new MediaRecorder(recDest.stream, {mimeType: mt});
+  recorder.ondataavailable = e => e.data.size && recChunks.push(e.data);
+  recorder.onstop = () => {
+    const blob = new Blob(recChunks, {type: mt.split(';')[0]}), url = URL.createObjectURL(blob);
+    const ext = mt.includes('mp4') ? 'm4a' : mt.includes('ogg') ? 'ogg' : 'webm';
+    recorder = null; $('#btnRec').classList.remove('on'); $('#btnRec').textContent = '⏺ Thu âm';
+    toast(`🎙 Đã thu xong. <a href="${url}" download="${esc(recName)}.${ext}">⬇ Tải bản thu về máy</a> <button onclick="new Audio('${url}').play()">▶ Nghe lại</button>`, 0);
+  };
+  recorder.start(1000);
+  $('#btnRec').classList.add('on'); $('#btnRec').textContent = '⏹ Dừng thu';
+}
+
+/* ---------- vẽ lời + sóng nhạc ---------- */
+const viz = $('#viz'), vctx = viz.getContext('2d'); let vbuf;
+function frame(){
+  requestAnimationFrame(frame);
+  if (!current) return;
+  const t = media.currentTime;
+  if (lrc){
+    let i = -1; for (let k = 0; k < lrc.length; k++){ if (lrc[k].t <= t) i = k; else break; }
+    const cur = lrc[i], nx = lrc[i + 1];
+    const a = cur ? cur.x : '', b = nx ? nx.x : (i < 0 && lrc[0] ? '' : '');
+    if (i < 0){ $('#ly1').textContent = ''; $('#ly2').textContent = lrc[0].x; }
+    else {
+      if ($('#ly1').textContent !== a) $('#ly1').textContent = a;
+      if ($('#ly2').textContent !== b) $('#ly2').textContent = b;
+      const end = nx ? nx.t : cur.t + 4, p = Math.max(0, Math.min(1, (t - cur.t) / Math.max(.5, Math.min(end - cur.t, 8) * .9)));
+      $('#ly1').style.setProperty('--p', (p * 100).toFixed(1) + '%');
+    }
+  } else if (plain && curKind === 'audio' && media.duration){
+    const el = $('#plainLy'); el.scrollTop = (t / media.duration) * (el.scrollHeight - el.clientHeight);
+  }
+  if (curKind === 'audio' && analyser){
+    const w = viz.clientWidth, h = viz.clientHeight;
+    if (viz.width !== w || viz.height !== h){ viz.width = w; viz.height = h; }
+    vbuf = vbuf || new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(vbuf);
+    vctx.clearRect(0, 0, w, h);
+    const n = 64, bw = w / n;
+    for (let k = 0; k < n; k++){
+      const v = vbuf[Math.floor(k * vbuf.length / n * .8)] / 255, bh = v * h;
+      vctx.fillStyle = `hsl(${300 + k * 1.5},90%,${55 + v * 15}%)`;
+      vctx.fillRect(k * bw + 1, h - bh, bw - 2, bh);
+    }
+  }
+}
+requestAnimationFrame(frame);
+
+/* ---------- tìm bằng giọng nói ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+function cleanVoice(t){
+  return t.replace(/[.,!?。]/g, ' ').replace(/^\s*(cho tôi |cho em |cho mình |mở |tìm |hát |phát |chọn )*(bài hát |bài |ca khúc )?/i, '').trim();
+}
+function voiceSearch(){
+  if (rec){ rec.stop(); return; }
+  if (!SR){ toast('Trình duyệt này chưa hỗ trợ tìm bằng giọng nói. Thầy dùng Google Chrome, Edge hoặc Cốc Cốc nhé.', 5000); return; }
+  rec = new SR(); rec.lang = 'vi-VN'; rec.interimResults = true; rec.maxAlternatives = 1; rec.continuous = false;
+  if (!navigator.onLine && 'processLocally' in rec) rec.processLocally = true;
+  const hint = $('#voiceHint');
+  hint.textContent = '🎙️ Thầy nói tên bài hoặc tên ca sĩ…';
+  $('#btnVoice').classList.add('listening');
+  if (tab === 'lists' || tab === 'source') setTab('all');
+  rec.onresult = e => {
+    let t = ''; for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+    const q = cleanVoice(t); $('#q').value = q; showLimit = 200; renderLib();
+    hint.textContent = '🎙️ “' + t.trim() + '”';
+    if (e.results[e.results.length - 1].isFinal){
+      const n = results().length;
+      hint.textContent = n ? `🎙️ “${q}” — tìm thấy ${n} bài` : `🎙️ “${q}” — không thấy bài nào, thầy thử nói lại hoặc nói tên ca sĩ`;
+    }
+  };
+  rec.onerror = e => {
+    const m = {'not-allowed':'Chưa cho phép dùng micro. Bấm biểu tượng 🔒 trên thanh địa chỉ để cho phép.','service-not-allowed':'Chưa cho phép dùng micro.','network':'Tìm bằng giọng nói cần có mạng Internet. Khi không có mạng thầy gõ tên bài (không dấu cũng được).','no-speech':'Không nghe thấy gì, thầy bấm 🎙️ và nói lại nhé.','audio-capture':'Không thấy micro trên máy.','language-not-supported':'Máy chưa có gói nhận giọng tiếng Việt ngoại tuyến — cần có mạng.'}[e.error];
+    if (m) hint.textContent = '⚠️ ' + m; else if (e.error !== 'aborted') hint.textContent = '⚠️ Lỗi nhận giọng: ' + e.error;
+  };
+  rec.onend = () => { rec = null; $('#btnVoice').classList.remove('listening'); setTimeout(() => { if (!rec && /Thầy nói/.test(hint.textContent)) hint.textContent = ''; }, 100); };
+  try { rec.start(); } catch(e){ rec = null; $('#btnVoice').classList.remove('listening'); hint.textContent = '⚠️ ' + e.message; }
+}
+
+/* ---------- sự kiện ---------- */
+$('#q').addEventListener('input', () => { showLimit = 200; if (tab === 'lists' || tab === 'source') setTab('all'); else renderLib(); if (!$('#q').value) $('#voiceHint').textContent = ''; });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter'){ const r = results(); if (r.length) addQueue(r[0].id); } });
+$('#btnVoice').onclick = voiceSearch;
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
+$('#btnReperm').onclick = async () => { if (await ensureDir()){ toast('✅ Đã mở lại thư mục.'); renderLib(); } };
+$('#btnRandom').onclick = () => { const r = results(); if (!r.length) return; addQueue(r[Math.floor(Math.random() * r.length)].id); };
+$('#libList').addEventListener('click', async e => {
+  if (e.target.id === 'btnMore'){ showLimit += 300; renderLib(); return; }
+  const li = e.target.closest('[data-li]');
+  if (li){
+    const b = e.target.closest('button[data-act]'); if (!b) return;
+    const L = lists[+li.dataset.li], ids = L.ids.filter(id => songs.has(id));
+    if (b.dataset.act === 'play'){ if (!ids.length) return; queue = ids.slice(); saveQueue(); renderQueue(); next(); }
+    if (b.dataset.act === 'append'){ queue.push(...ids); saveQueue(); renderQueue(); toast(`Đã thêm ${ids.length} bài vào hàng chờ.`); }
+    if (b.dataset.act === 'rename'){ const n = prompt('Tên mới cho danh sách:', L.name); if (n && n.trim()){ L.name = n.trim(); save('kq_lists', lists); renderLists(); } }
+    if (b.dataset.act === 'del' && confirm(`Xóa danh sách “${L.name}”?`)){ lists.splice(+li.dataset.li, 1); save('kq_lists', lists); renderLists(); }
+    return;
+  }
+  const row = e.target.closest('.song'); if (!row) return;
+  const id = row.dataset.id, s = songs.get(id); if (!s) return;
+  if (e.target.closest('.fav')){
+    s.fav = !s.fav; await DB.put('songs', strip(s));
+    if (tab === 'fav') renderLib(); else { const f = row.querySelector('.fav'); f.classList.toggle('yes', s.fav); f.textContent = s.fav ? '★' : '☆'; }
+    return;
+  }
+  if (e.target.closest('.b-del')) return deleteSong(id);
+  if (e.target.closest('.b-now')){ hideScore(); return playSong(id); }
+  addQueue(id);
+});
+$('#qList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const i = +b.closest('.qi').dataset.i, id = queue[i];
+  if (b.dataset.act === 'rm') queue.splice(i, 1);
+  if (b.dataset.act === 'top'){ queue.splice(i, 1); queue.unshift(id); }
+  if (b.dataset.act === 'now'){ queue.splice(i, 1); saveQueue(); renderQueue(); return playSong(id); }
+  saveQueue(); renderQueue();
+});
+$('#btnSaveList').onclick = () => {
+  const ids = (current ? [current] : []).concat(queue.filter(id => id !== current));
+  if (!ids.length){ toast('Hàng chờ đang trống — chọn bài trước rồi lưu.'); return; }
+  const name = prompt(`Đặt tên cho danh sách (${ids.length} bài):`, 'Danh sách ' + new Date().toLocaleDateString('vi-VN'));
+  if (!name || !name.trim()) return;
+  const ex = lists.find(l => l.name.toLowerCase() === name.trim().toLowerCase());
+  if (ex){ if (!confirm(`Đã có danh sách “${ex.name}”. Ghi đè?`)) return; ex.ids = ids; }
+  else lists.unshift({name: name.trim(), ids, created: Date.now()});
+  save('kq_lists', lists); if (tab === 'lists') renderLists();
+  toast(`💾 Đã lưu danh sách “${esc(name.trim())}” (${ids.length} bài). Xem ở thẻ 📋 Danh sách.`);
+};
+$('#btnShuffle').onclick = () => { for (let i = queue.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; } saveQueue(); renderQueue(); };
+$('#btnClearQ').onclick = () => { if (queue.length && confirm('Xóa hết các bài đang chờ?')){ queue = []; saveQueue(); renderQueue(); } };
+$('#btnPlay').onclick = async () => {
+  await ensureAudio();
+  if (current && media.src){ if (media.paused) media.play(); else media.pause(); }
+  else next();
+};
+$('#btnNext').onclick = () => next();
+$('#btnRestart').onclick = () => { if (current){ media.currentTime = 0; media.play(); } };
+$('#vol').oninput = e => { S.vol = +e.target.value; media.volume = S.vol / 100; save('kq_set', S); };
+$('#keyDown').onclick = async () => { await ensureAudio(); if (!psNode) return toast('Máy này chưa đổi tông được.'); semis = Math.max(-7, semis - 1); applyKey(); };
+$('#keyUp').onclick = async () => { await ensureAudio(); if (!psNode) return toast('Máy này chưa đổi tông được.'); semis = Math.min(7, semis + 1); applyKey(); };
+const setSpeed = v => { speed = Math.round(Math.max(.7, Math.min(1.3, v)) * 100) / 100; media.playbackRate = speed; $('#spdVal').textContent = Math.round(speed * 100) + '%'; };
+$('#spdDown').onclick = () => setSpeed(speed - .05);
+$('#spdUp').onclick = () => setSpeed(speed + .05);
+$('#btnVocal').onclick = async () => { await ensureAudio(); vocalOn = !vocalOn; applyVocal(); toast(vocalOn ? '🗣 Đang bớt giọng ca sĩ (hợp với bài hát gốc mp3). Bấm lần nữa để tắt.' : 'Đã trả lại âm thanh gốc.', 2500); };
+$('#btnMic').onclick = async () => {
+  if (micStream){ micOff(); $('#btnMic').classList.remove('on'); $('#micPanel').hidden = true; return; }
+  if (await micOn()){ $('#btnMic').classList.add('on'); $('#micPanel').hidden = false; toast('🎤 Đã bật micro. Nếu loa bị hú, giảm âm lượng micro hoặc để micro xa loa.', 4500); }
+};
+$('#micSel').onchange = async e => { S.micId = e.target.value; save('kq_set', S); micOff(); await micOn(); };
+$('#micVol').oninput = e => { S.micVol = +e.target.value; applyMic(); save('kq_set', S); };
+$('#echo').oninput = e => { S.echo = +e.target.value; applyMic(); save('kq_set', S); };
+$('#monitor').onchange = e => { S.monitor = e.target.checked; applyMic(); save('kq_set', S); };
+$('#btnRec').onclick = toggleRec;
+$('#btnScore').onclick = () => { S.score = !S.score; save('kq_set', S); $('#btnScore').classList.toggle('on', S.score); toast(S.score ? '💯 Sẽ chấm điểm khi hết bài.' : 'Đã tắt chấm điểm.', 2000); };
+const wrap = $('#stagewrap');
+function toggleFull(){ if (document.fullscreenElement) document.exitFullscreen(); else wrap.requestFullscreen().catch(() => {}); }
+$('#btnFull').onclick = toggleFull;
+$('#stage').addEventListener('dblclick', toggleFull);
+let hideTimer;
+wrap.addEventListener('mousemove', () => { wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (document.fullscreenElement) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 3000); });
+document.addEventListener('fullscreenchange', () => { wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (document.fullscreenElement) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 3000); });
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input[type=search],input[type=text],textarea,select') || e.ctrlKey || e.altKey || e.metaKey) {
+    if (e.key === 'Escape') e.target.blur();
+    return;
+  }
+  const k = e.key.toLowerCase();
+  if (k === ' '){ e.preventDefault(); $('#btnPlay').click(); }
+  else if (k === 'n') $('#btnNext').click();
+  else if (k === 'f') toggleFull();
+  else if (k === '[') $('#keyDown').click();
+  else if (k === ']') $('#keyUp').click();
+  else if (k === 'm') $('#btnMic').click();
+  else if (k === 'v') voiceSearch();
+  else if (k === '/'){ e.preventDefault(); $('#q').focus(); }
+});
+$('#fileIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+$('#folderIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+// kéo thả tệp vào cửa sổ để chép
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) importFiles(e.dataTransfer.files); });
+$('#btnHelp').onclick = () => $('#dlgHelp').showModal();
+
+function netStat(){ const on = navigator.onLine; $('#netStat').textContent = on ? '● Có mạng' : '● Không có mạng — vẫn hát bình thường'; $('#netStat').classList.toggle('off', !on); }
+addEventListener('online', netStat); addEventListener('offline', netStat);
+let deferredInstall;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('#btnInstall').hidden = false; });
+$('#btnInstall').onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; $('#btnInstall').hidden = true; };
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+/* ---------- khởi động ---------- */
+(async function init(){
+  netStat();
+  // nốt nhạc bay trên màn hình chờ
+  const idle = $('#idle'); ['♪','♫','♬','♩','🎵','🎶'].forEach((c, i) => { const n = document.createElement('span'); n.className = 'note'; n.textContent = c; n.style.left = (8 + i * 16) + '%'; n.style.bottom = '0'; n.style.animationDelay = (-i * 1.5) + 's'; idle.appendChild(n); });
+  $('#vol').value = S.vol; media.volume = S.vol / 100;
+  $('#micVol').value = S.micVol; $('#echo').value = S.echo; $('#monitor').checked = S.monitor;
+  $('#btnScore').classList.toggle('on', S.score);
+  try { await DB.open(); await loadLibrary(); }
+  catch(e){ $('#libList').innerHTML = `<div class="empty">Không mở được bộ nhớ của trình duyệt (${esc(e.message)}).<br>Nếu đang dùng chế độ ẩn danh, hãy mở cửa sổ thường.</div>`; }
+  if (!load('kq_seenHelp', false)){ save('kq_seenHelp', true); if (!songs.size) $('#dlgHelp').showModal(); }
+})();
+</script>
+</body>
+</html>
