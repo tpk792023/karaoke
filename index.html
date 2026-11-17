@@ -80,6 +80,20 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,380px) 
 .card ol li{margin:3px 0}
 .card a{color:var(--cyan)}
 .ytmore{display:block;width:100%;margin:10px 0 4px;background:#3a1430;border-color:#6b2050}
+.qr{background:#fff;border-radius:12px;padding:8px;line-height:0}
+.qr svg,.qr img{width:100%;height:auto;display:block}
+.rbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rbox #qrBig{width:220px;min-height:100px;display:grid;place-items:center;color:#333;font-size:13px;line-height:1.4}
+.rinfo{flex:1;min-width:180px}
+#roomCode{font-size:40px;font-weight:900;letter-spacing:6px;color:var(--gold)}
+#rStatus{margin:6px 0;font-size:14px}
+#rLink{color:var(--cyan);font-size:13px;word-break:break-all}
+#rBadge:empty{display:none}
+#rBadge{background:var(--ok);color:#06240f;border-radius:10px;padding:0 6px;font-size:12px;font-weight:700;margin-left:2px}
+#btnRemote.on{border-color:var(--ok)}
+#idleQR{position:absolute;right:18px;bottom:18px;display:flex;align-items:center;gap:10px;background:rgba(10,6,25,.75);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:left;font-size:clamp(12px,1.3vw,16px)}
+#idleQR[hidden]{display:none}
+#idleQR .qr{width:clamp(90px,11vw,150px);padding:5px}
 #audioBg{position:absolute;inset:0;display:none;background:radial-gradient(ellipse at 30% 20%,#3a1458,#0c0820 70%)}
 #audioBg canvas{position:absolute;left:0;bottom:0;width:100%;height:45%;opacity:.55}
 #audioBg .at{position:absolute;top:9%;left:0;right:0;text-align:center;padding:0 20px}
@@ -179,6 +193,7 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
 <header>
   <div class="brand">🎤 <b>Phòng Hát Karaoke</b></div>
   <span id="netStat"></span>
+  <button id="btnRemote" title="Cho mọi người dùng điện thoại chọn bài">📱 Điện thoại chọn bài <span id="rBadge"></span></button>
   <button id="btnInstall" hidden>⬇ Cài vào máy</button>
   <button id="btnHelp">❓ Hướng dẫn</button>
 </header>
@@ -214,6 +229,7 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
         <div class="mic">🎤</div>
         <h2>Mời chọn bài</h2>
         <p id="idleSub">Gõ tên bài vào ô tìm kiếm, bấm ＋ để thêm vào hàng chờ</p>
+        <div id="idleQR" hidden><div class="qr"></div><div>📱 Quét mã để chọn bài<br>bằng điện thoại</div></div>
       </div>
       <div id="songTitle" class="osd"></div>
       <div id="nextUp" class="osd"></div>
@@ -271,6 +287,27 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
   <p><b>Phím tắt:</b> <kbd>Cách</kbd> phát/dừng · <kbd>N</kbd> qua bài · <kbd>F</kbd> toàn màn hình · <kbd>[</kbd> <kbd>]</kbd> tông · <kbd>M</kbd> micro · <kbd>V</kbd> tìm bằng giọng nói · <kbd>/</kbd> ô tìm kiếm</p>
   <p style="color:var(--muted);font-size:13px">Ứng dụng không có quảng cáo, không gửi bài hát lên mạng. Mọi thứ nằm trên máy của thầy.</p>
   <form method="dialog" style="text-align:right"><button class="btn-main">Đã hiểu</button></form>
+</dialog>
+
+<dialog id="dlgRemote">
+  <h3>📱 Dùng điện thoại chọn bài</h3>
+  <p style="color:var(--muted);margin-top:-4px">Mọi người quét mã bằng camera điện thoại để tìm bài, cho vào hàng chờ, qua bài, đổi tông. Không cần cài gì, chỉ cần điện thoại có mạng.</p>
+  <div class="rbox">
+    <div id="qrBig" class="qr"></div>
+    <div class="rinfo">
+      <div style="color:var(--muted);font-size:13px">Mã phòng</div>
+      <div id="roomCode"></div>
+      <div id="rStatus"></div>
+      <a id="rLink" target="_blank" rel="noopener"></a>
+    </div>
+  </div>
+  <div class="row" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+    <button id="btnRemoteToggle"></button>
+    <button id="btnCopyLink">📋 Chép link</button>
+    <button id="btnNewRoom" title="Tạo mã phòng mới — các điện thoại cũ phải quét lại">🔄 Đổi mã phòng</button>
+  </div>
+  <p style="color:var(--muted);font-size:13px">Mã QR cũng hiện trên màn hình chờ để mọi người quét từ máy chiếu. Đổi mã phòng khi không muốn người cũ chọn bài nữa.</p>
+  <form method="dialog" style="text-align:right"><button class="btn-main">Đóng</button></form>
 </dialog>
 
 <input type="file" id="fileIn" multiple accept="video/*,audio/*,.mkv,.lrc,.txt" hidden>
@@ -502,18 +539,18 @@ async function getLyricsText(s){
 
 /* ---------- tìm kiếm + hiển thị thư viện ---------- */
 function searchKey(s){ return s._k || (s._k = norm([s.title, s.artist, s.code, s.tone, s.fname].join(' '))); }
-function results(){
-  const q = norm($('#q').value);
+function results(qText = $('#q').value, tb = tab){
+  const q = norm(qText);
   let arr = [...songs.values()];
-  if (tab === 'fav') arr = arr.filter(s => s.fav);
-  if (tab === 'recent') arr = arr.filter(s => s.last).sort((a, b) => b.last - a.last).slice(0, 150);
+  if (tb === 'fav') arr = arr.filter(s => s.fav);
+  if (tb === 'recent') arr = arr.filter(s => s.last).sort((a, b) => b.last - a.last).slice(0, 150);
   if (q){
     const toks = q.split(' ');
     const qt = q;
     arr = arr.filter(s => { const k = searchKey(s); return toks.every(t => k.includes(t)); })
       .map(s => { const t = norm(s.title); let sc = 0; if (t === qt) sc = 10; else if (t.startsWith(qt)) sc = 6; else if (t.includes(qt)) sc = 4; else if (searchKey(s).includes(qt)) sc = 2; if (s.code === qt) sc = 12; return [sc + (s.fav ? .5 : 0), s]; })
       .sort((a, b) => b[0] - a[0] || a[1].title.localeCompare(b[1].title, 'vi')).map(x => x[1]);
-  } else if (tab !== 'recent'){
+  } else if (tb !== 'recent'){
     arr.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
   }
   return arr;
@@ -619,7 +656,7 @@ function renderQueue(){
   $('#nowBox').innerHTML = cs ? `Đang hát<b>${esc(cs.title)}</b>` : '';
   $('#qList').innerHTML = queue.length ? queue.map((id, i) => {
     const s = songs.get(id); if (!s) return '';
-    return `<div class="qi" data-i="${i}"><span class="n">${i + 1}</span><div class="meta"><div class="t">${esc(s.title)}</div><div class="s">${esc([s.artist, s.tone].filter(Boolean).join(' · '))}</div></div>
+    return `<div class="qi" data-i="${i}"><span class="n">${i + 1}</span><div class="meta"><div class="t">${esc(s.title)}</div><div class="s">${esc([qWho[id] ? '📱 ' + qWho[id] : '', s.artist, s.tone].filter(Boolean).join(' · '))}</div></div>
       ${i ? '<button data-act="top" title="Ưu tiên lên đầu">⤒</button>' : ''}<button data-act="now" title="Hát ngay">▶</button><button data-act="rm" title="Bỏ khỏi hàng chờ">✕</button></div>`;
   }).join('') : `<div class="empty">Hàng chờ đang trống.<br>Bấm vào tên bài để thêm.</div>`;
   const nx = queue[0] && songs.get(queue[0]);
@@ -628,6 +665,7 @@ function renderQueue(){
   $('#idleSub').innerHTML = !songs.size ? 'Bấm <b>＋ Thêm bài</b> để chọn thư mục karaoke' : queue.length ? `Có ${queue.length} bài đang chờ — bấm <b>▶</b> để bắt đầu` : 'Gõ tên bài vào ô tìm kiếm, bấm <b>＋</b> để thêm vào hàng chờ';
   document.querySelectorAll('.song.playing').forEach(e => e.classList.remove('playing'));
   if (current) { const el = document.querySelector(`.song[data-id="${CSS.escape(current)}"]`); if (el) el.classList.add('playing'); }
+  pushState();
 }
 
 /* ---------- âm thanh ---------- */
@@ -685,6 +723,7 @@ async function ensureAudio(){
 function applyKey(){
   $('#keyVal').textContent = (semis > 0 ? '+' : '') + semis;
   if (psNode) psNode.parameters.get('ratio').value = Math.pow(2, semis / 12);
+  pushState();
 }
 function applyVocal(){
   $('#btnVocal').classList.toggle('on', vocalOn);
@@ -811,8 +850,8 @@ function stopAll(){
   $('#btnPlay').textContent = '▶'; document.title = 'Phòng Hát Karaoke';
   renderQueue();
 }
-media.addEventListener('play', () => $('#btnPlay').textContent = '⏸');
-media.addEventListener('pause', () => $('#btnPlay').textContent = '▶');
+media.addEventListener('play', () => { $('#btnPlay').textContent = '⏸'; pushState(); });
+media.addEventListener('pause', () => { $('#btnPlay').textContent = '▶'; pushState(); });
 media.addEventListener('loadedmetadata', () => $('#tDur').textContent = fmt(media.duration));
 media.addEventListener('timeupdate', () => {
   $('#tCur').textContent = fmt(media.currentTime);
@@ -1005,29 +1044,36 @@ function ytErrMsg(j){
   if (/Referer|blocked/i.test(reason + (e.message || ''))) return 'Mã khóa đang bị giới hạn, chưa cho trang này dùng (kiểm tra mục giới hạn trang web của mã khóa).';
   return 'Lỗi khi tìm YouTube: ' + (e.message || 'không rõ');
 }
+async function ytFind(q){
+  const key = ytKey();
+  if (!key) throw new Error('Máy hát chưa có mã khóa YouTube.');
+  const qq = /karaoke/i.test(q) ? q : q + ' karaoke';
+  let items = ytCache.get(qq.toLowerCase());
+  if (items) return items;
+  const u = 'https://www.googleapis.com/youtube/v3/search?' + new URLSearchParams({part:'snippet', type:'video', maxResults:'25', videoEmbeddable:'true', regionCode:'VN', relevanceLanguage:'vi', q:qq, key});
+  let r, j;
+  try { r = await fetch(u); j = await r.json().catch(() => ({})); }
+  catch(e){ throw new Error('Không kết nối được YouTube — kiểm tra mạng.'); }
+  if (!r.ok) throw new Error(ytErrMsg(j));
+  items = (j.items || []).filter(it => it.id && it.id.videoId).map(it => {
+    const sn = it.snippet || {}, th = sn.thumbnails || {};
+    return ytRec(it.id.videoId, decodeHtml(sn.title), decodeHtml(sn.channelTitle), (th.medium || th.default || {}).url).id;
+  });
+  ytCache.set(qq.toLowerCase(), items);
+  return items;
+}
 async function ytSearch(q){
   q = (q || '').trim();
   if (tab !== 'yt') setTab('yt');
   if (!q){ toast('Thầy gõ hoặc nói tên bài trước nhé.'); return; }
   const key = ytKey();
   if (!key || !navigator.onLine){ ytState = {q}; renderYT(); if (!key) toast('Cần mã khóa YouTube để tìm ngay trong phần mềm — làm theo hướng dẫn bên trái (chỉ làm 1 lần).', 6000); return; }
-  const qq = /karaoke/i.test(q) ? q : q + ' karaoke';
   ytState = {q, loading:true}; renderYT();
   try {
-    let items = ytCache.get(qq.toLowerCase());
-    if (!items){
-      const u = 'https://www.googleapis.com/youtube/v3/search?' + new URLSearchParams({part:'snippet', type:'video', maxResults:'25', videoEmbeddable:'true', regionCode:'VN', relevanceLanguage:'vi', q:qq, key});
-      const r = await fetch(u), j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(ytErrMsg(j));
-      items = (j.items || []).filter(it => it.id && it.id.videoId).map(it => {
-        const sn = it.snippet || {}, th = sn.thumbnails || {};
-        return ytRec(it.id.videoId, decodeHtml(sn.title), decodeHtml(sn.channelTitle), (th.medium || th.default || {}).url).id;
-      });
-      ytCache.set(qq.toLowerCase(), items);
-    }
+    const items = await ytFind(q);
     ytState = {q, items};
     const h = $('#voiceHint'); if (/YouTube…$/.test(h.textContent)) h.textContent = `🎙️ “${q}” — ${items.length} bài trên YouTube`;
-  } catch(e){ ytState = {q, err: e.message === 'Failed to fetch' ? 'Không kết nối được YouTube — kiểm tra mạng.' : e.message}; }
+  } catch(e){ ytState = {q, err: e.message}; }
   renderYT();
 }
 function renderYT(){
@@ -1131,6 +1177,7 @@ async function playYT(s){
 }
 function onYTState(e){
   if (curSrc !== 'yt') return;
+  pushState();
   if (e.data === 1) $('#btnPlay').textContent = '⏸';
   else if (e.data === 2) $('#btnPlay').textContent = '▶';
   else if (e.data === 0){ $('#btnPlay').textContent = '▶'; if (S.score) showScore(); else next(); }
@@ -1148,6 +1195,129 @@ setInterval(() => {
 }, 300);
 addEventListener('online', () => { if (tab === 'yt') renderYT(); });
 addEventListener('offline', () => { if (tab === 'yt') renderYT(); });
+
+/* ---------- điện thoại chọn bài ---------- */
+var RELAY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://karaoke-phong.phuockhai79.workers.dev';
+var rws = null, rOn = load('kq_remote', false), rRoom = load('kq_room', ''), rPeers = 0, rTimer = null, rRetry = 0, psT = null, qrLibP = null;
+var qWho = {};
+function genRoom(){ const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const a = crypto.getRandomValues(new Uint8Array(6)); for (const x of a) s += c[x % c.length]; save('kq_room', s); return s; }
+if (!rRoom) rRoom = genRoom();
+const remoteUrl = () => new URL('remote.html#' + rRoom, location.href).href;
+function remoteConnect(){
+  if (!rOn || rws) return;
+  clearTimeout(rTimer);
+  if (!navigator.onLine){ remoteUI(); rTimer = setTimeout(remoteConnect, 5000); return; }
+  let ws;
+  try { ws = new WebSocket(RELAY + '/room/' + rRoom + '?role=tv'); } catch(e){ return; }
+  rws = ws;
+  ws.onopen = () => { rRetry = 0; remoteUI(); pushState(true); };
+  ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch(err){ return; } onRemote(m).catch(err => console.warn(err)); };
+  ws.onclose = () => { if (rws === ws) rws = null; rPeers = 0; remoteUI(); if (rOn){ clearTimeout(rTimer); rTimer = setTimeout(remoteConnect, Math.min(30000, 2000 * (++rRetry))); } };
+  ws.onerror = () => {};
+  remoteUI();
+}
+function remoteStop(){ rOn = false; save('kq_remote', false); clearTimeout(rTimer); if (rws){ const w = rws; rws = null; w.close(); } rPeers = 0; remoteUI(); }
+setInterval(() => { if (rws && rws.readyState === 1) rws.send('{"t":"ping"}'); }, 25000);
+function rsend(o){ if (rws && rws.readyState === 1) rws.send(JSON.stringify(o)); }
+const mini = s => ({id:s.id, title:s.title, artist:s.artist || '', tone:s.tone || '', yt:s.src === 'yt', thumb:s.src === 'yt' ? (s.thumb || '') : '', kind:s.kind});
+function pushState(now){
+  if (!rws) return;
+  clearTimeout(psT);
+  psT = setTimeout(() => {
+    const c = current && getSong(current);
+    rsend({t:'state', cur: c ? Object.assign(mini(c), {by: qWho[c.id] || ''}) : null, playing: !!current && !isPaused(),
+      queue: queue.map(id => { const s = getSong(id); return s ? Object.assign(mini(s), {by: qWho[id] || ''}) : null; }).filter(Boolean).slice(0, 80),
+      key: semis, src: curSrc, lib: songs.size, yt: !!ytKey()});
+  }, now ? 0 : 200);
+}
+async function remoteSearch(q, mode){
+  q = String(q || '').trim().slice(0, 100);
+  if (!q) return {items: [], note: ''};
+  let items = [], note = '';
+  if (mode !== 'yt') items = results(q, 'all').slice(0, 40).map(mini);
+  if (mode === 'yt' || (!items.length && mode !== 'local')){
+    try { const ids = await ytFind(q); items = items.concat(ids.map(id => getSong(id)).filter(Boolean).map(mini)); }
+    catch(e){ note = e.message; }
+  }
+  if (!items.length && !note) note = mode === 'local' ? 'Máy hát chưa có bài này. Thử tìm trên YouTube.' : 'Không tìm thấy bài nào.';
+  return {items, note};
+}
+async function onRemote(m){
+  if (m.t === 'peers'){ rPeers = m.n; remoteUI(); return; }
+  if (m.t === 'hello'){ pushState(true); return; }
+  const who = String(m.name || '').trim() || 'Khách';
+  const reply = msg => rsend({t:'toast', to:m.from, msg});
+  switch (m.t){
+    case 'search': { const r = await remoteSearch(m.q, m.mode); rsend(Object.assign({t:'results', to:m.from, rid:m.rid, q:m.q}, r)); break; }
+    case 'add': {
+      const s = getSong(m.id); if (!s){ reply('Không tìm thấy bài này, bạn tìm lại nhé.'); break; }
+      if (queue.includes(m.id)){ reply(`“${s.title}” đã có trong hàng chờ rồi.`); break; }
+      qWho[m.id] = who;
+      await keepSong(m.id);
+      if (m.front) queue.unshift(m.id); else queue.push(m.id);
+      saveQueue(); renderQueue();
+      toast(`📱 <b>${esc(who)}</b> đã chọn: ${esc(s.title)}`, 3500);
+      reply(m.front ? `Đã đưa “${s.title}” lên đầu hàng chờ.` : `Đã thêm “${s.title}” — thứ ${queue.length} trong hàng chờ.`);
+      break;
+    }
+    case 'toggle': case 'next':
+      if (navigator.userActivation && !navigator.userActivation.hasBeenActive){
+        toast('📱 Điện thoại vừa bấm phát. Bấm chuột vào màn hình này một lần để máy được phép phát nhạc.', 8000);
+        reply('Máy hát cần được bấm chuột một lần trước khi phát. Nhờ người ngồi ở máy bấm giúp nhé.'); break;
+      }
+      if (m.t === 'next') next(); else if (!current) next(); else $('#btnPlay').click();
+      break;
+    case 'restart': $('#btnRestart').click(); break;
+    case 'key': if (curSrc === 'yt'){ reply('Bài YouTube không đổi tông được.'); break; } $(m.d > 0 ? '#keyUp' : '#keyDown').click(); break;
+    case 'top': case 'rm': {
+      const i = queue.indexOf(m.id); if (i < 0) break;
+      queue.splice(i, 1); if (m.t === 'top') queue.unshift(m.id);
+      saveQueue(); renderQueue(); break;
+    }
+  }
+}
+function loadQR(){
+  if (window.qrcode) return Promise.resolve();
+  if (qrLibP) return qrLibP;
+  qrLibP = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+    s.onload = res; s.onerror = () => { qrLibP = null; rej(); };
+    document.head.appendChild(s);
+  });
+  return qrLibP;
+}
+async function drawQR(){
+  try {
+    await loadQR();
+    const q = qrcode(0, 'M'); q.addData(remoteUrl()); q.make();
+    const svg = q.createSvgTag({cellSize: 4, margin: 2, scalable: true});
+    $('#qrBig').innerHTML = svg; $('#idleQR .qr').innerHTML = svg;
+  } catch(e){ $('#qrBig').textContent = 'Chưa tải được mã QR (cần có mạng). Mở link bên cạnh trên điện thoại.'; $('#idleQR .qr').innerHTML = ''; }
+}
+function remoteUI(){
+  const ok = rws && rws.readyState === 1;
+  $('#btnRemote').classList.toggle('on', rOn);
+  $('#rBadge').textContent = rOn && ok && rPeers ? rPeers : '';
+  $('#roomCode').textContent = rRoom;
+  $('#rLink').textContent = remoteUrl(); $('#rLink').href = remoteUrl();
+  $('#rStatus').innerHTML = !rOn ? '⚪ Đang tắt' : !navigator.onLine ? '🟠 Máy không có mạng' : ok ? `🟢 Đã sẵn sàng · <b>${rPeers}</b> điện thoại đang nối` : '🟡 Đang kết nối…';
+  $('#btnRemoteToggle').textContent = rOn ? '⏻ Tắt điện thoại chọn bài' : '⏻ Bật điện thoại chọn bài';
+  $('#btnRemoteToggle').className = rOn ? '' : 'btn-main';
+  $('#idleQR').hidden = !(rOn && ok && $('#idleQR .qr').innerHTML);
+}
+$('#btnRemote').onclick = async () => {
+  if (!rOn){ rOn = true; save('kq_remote', true); remoteConnect(); }
+  remoteUI(); $('#dlgRemote').showModal(); await drawQR(); remoteUI();
+  ensureAudio().catch(() => {}); // cho phép máy hát tự phát bài khi điện thoại bấm
+};
+$('#btnRemoteToggle').onclick = async () => { if (rOn) remoteStop(); else { rOn = true; save('kq_remote', true); remoteConnect(); await drawQR(); } remoteUI(); };
+$('#btnNewRoom').onclick = async () => {
+  if (!confirm('Tạo mã phòng mới? Các điện thoại đang nối sẽ phải quét mã mới.')) return;
+  rRoom = genRoom(); if (rws){ const w = rws; rws = null; w.close(); } remoteConnect(); await drawQR(); remoteUI();
+};
+$('#btnCopyLink').onclick = async () => { try { await navigator.clipboard.writeText(remoteUrl()); toast('Đã chép link. Gửi vào nhóm Zalo lớp để mọi người mở trên điện thoại.'); } catch(e){ prompt('Chép link này:', remoteUrl()); } };
+addEventListener('online', () => { if (rOn && !rws) remoteConnect(); });
 
 /* ---------- sự kiện ---------- */
 $('#q').addEventListener('input', () => { showLimit = 200; if (tab === 'lists' || tab === 'source') setTab('all'); else if (tab !== 'yt') renderLib(); if (!$('#q').value) $('#voiceHint').textContent = ''; });
@@ -1280,6 +1450,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
   $('#btnScore').classList.toggle('on', S.score);
   try { await DB.open(); await loadLibrary(); }
   catch(e){ $('#libList').innerHTML = `<div class="empty">Không mở được bộ nhớ của trình duyệt (${esc(e.message)}).<br>Nếu đang dùng chế độ ẩn danh, hãy mở cửa sổ thường.</div>`; }
+  remoteUI();
+  if (rOn){ remoteConnect(); drawQR().then(remoteUI); }
   if (!load('kq_seenHelp', false)){ save('kq_seenHelp', true); if (!songs.size) $('#dlgHelp').showModal(); }
 })();
 </script>

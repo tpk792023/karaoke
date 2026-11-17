@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chọn bài karaoke</title>
+<meta name="theme-color" content="#140f26">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#0f0b1e;--panel:#1a1432;--panel2:#231b42;--line:#342a5c;--text:#f4f0ff;--muted:#a79fc6;--pink:#ff4fa3;--gold:#ffc83d;--cyan:#4fd8ff;--ok:#5ee08a;--bad:#ff6b6b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 13px;cursor:pointer}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.4}
+.btn-main{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:700}
+input{font:inherit;color:var(--text);background:#120d26;border:1px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;min-width:0}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,#1d1440,#2a1240);border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:8px}
+.brand{font-weight:800;font-size:17px;flex:1}
+.brand b{background:linear-gradient(90deg,var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+#st{font-size:12.5px;color:var(--muted);text-align:right}
+#st.ok{color:var(--ok)}#st.warn{color:var(--gold)}
+#who{font-size:12.5px;background:none;border:0;color:var(--cyan);padding:2px 0}
+main{padding:12px 14px;max-width:640px;margin:0 auto}
+.now{background:linear-gradient(135deg,rgba(255,79,163,.2),rgba(79,216,255,.08));border:1px solid rgba(255,79,163,.35);border-radius:16px;padding:12px}
+.now .lbl{font-size:12.5px;color:var(--muted)}
+.now .t{font-size:18px;font-weight:700;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.now .s{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctl{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.ctl button{font-size:20px;padding:8px 14px}
+#bPlay{background:var(--pink);border-color:var(--pink);font-size:22px;padding:8px 22px}
+.key{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:13px;color:var(--muted)}
+.key button{font-size:16px;padding:6px 12px}
+.key b{color:var(--text);min-width:24px;text-align:center}
+.tabs{display:flex;gap:6px;margin:14px 0 10px}
+.tabs button{flex:1;border-radius:20px;padding:8px}
+.tabs button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.sbar{display:flex;gap:6px}
+#bVoice{font-size:20px;padding:6px 14px}
+#bVoice.listening{background:var(--bad);border-color:var(--bad)}
+.modes{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.modes button{font-size:13px;padding:5px 11px;border-radius:16px}
+.modes button.on{background:#3b2f6b;border-color:var(--cyan)}
+#hint{font-size:13px;color:var(--gold);margin:4px 0}
+#hint:empty{display:none}
+.item{display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid rgba(255,255,255,.06)}
+.item img{width:64px;height:36px;object-fit:cover;border-radius:6px;flex:none;background:#000}
+.item .m{flex:1;min-width:0}
+.item .t{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .s{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item button{flex:none;padding:7px 11px;font-size:15px}
+.item .add{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:700}
+.n{width:24px;height:24px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-size:12px;color:var(--muted);flex:none}
+.tag{font-size:11px;padding:0 6px;border-radius:8px;background:#30275a;color:#d7cffa;margin-left:4px}
+.tag.yt{background:#5a1a1a;color:#ffb3b3}
+.empty{color:var(--muted);text-align:center;padding:24px 8px;line-height:1.6}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(20,14,44,.97);border:1px solid var(--line);border-radius:12px;padding:10px 14px;max-width:92%;text-align:center;display:none;z-index:9;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.overlay{position:fixed;inset:0;background:rgba(5,3,14,.92);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.overlay[hidden]{display:none}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:380px}
+.box h3{margin:0 0 6px}
+.box p{color:var(--muted);font-size:14px;margin:4px 0 12px}
+.box .row{display:flex;gap:8px;margin-top:12px}
+.box .row button{flex:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🎤 <b>Chọn bài</b></div>
+  <div><div id="st">Đang kết nối…</div><button id="who"></button></div>
+</header>
+<main>
+  <section class="now">
+    <div class="lbl">Đang hát</div>
+    <div class="t" id="nowT">—</div>
+    <div class="s" id="nowS"></div>
+    <div class="ctl">
+      <button id="bRestart" title="Hát lại">⏮</button>
+      <button id="bPlay" title="Phát / Dừng">▶</button>
+      <button id="bNext" title="Qua bài">⏭</button>
+      <div class="key">Tông <button id="bKd">♭</button><b id="keyV">0</b><button id="bKu">♯</button></div>
+    </div>
+  </section>
+
+  <div class="tabs">
+    <button data-v="find" class="on">🔎 Tìm bài</button>
+    <button data-v="queue">📋 Hàng chờ <span id="qn"></span></button>
+  </div>
+
+  <section id="vFind">
+    <div class="sbar">
+      <input id="q" type="search" placeholder="Tên bài, ca sĩ… (không dấu cũng được)" enterkeyhint="search" autocomplete="off">
+      <button id="bVoice" title="Nói tên bài">🎙️</button>
+      <button id="bGo" class="btn-main">Tìm</button>
+    </div>
+    <div class="modes" id="modes">
+      <button data-m="auto" class="on">Tự động</button>
+      <button data-m="local">Bài trên máy hát</button>
+      <button data-m="yt">YouTube</button>
+    </div>
+    <div id="hint"></div>
+    <div id="res"><div class="empty">Gõ hoặc bấm 🎙️ nói tên bài muốn hát,<br>rồi bấm <b>＋</b> để cho vào hàng chờ.</div></div>
+  </section>
+
+  <section id="vQueue" hidden>
+    <div id="ql"></div>
+  </section>
+</main>
+
+<div class="overlay" id="ovName" hidden>
+  <div class="box">
+    <h3>👋 Bạn tên gì?</h3>
+    <p>Tên sẽ hiện trên màn hình khi bạn chọn bài, để mọi người biết đến lượt ai hát.</p>
+    <input id="nameIn" maxlength="30" placeholder="Ví dụ: Lan 9A">
+    <div class="row"><button id="bSkip">Bỏ qua</button><button id="bName" class="btn-main">Vào chọn bài</button></div>
+  </div>
+</div>
+<div class="overlay" id="ovRoom" hidden>
+  <div class="box">
+    <h3>🔑 Nhập mã phòng</h3>
+    <p>Mã phòng hiện trên màn hình hát (bấm “📱 Điện thoại chọn bài”).</p>
+    <input id="roomIn" maxlength="12" placeholder="VD: K7M2PQ" style="text-transform:uppercase;letter-spacing:3px;font-size:20px">
+    <div class="row"><button id="bRoom" class="btn-main">Vào phòng</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const RELAY = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'ws://localhost:8787' : 'wss://karaoke-phong.phuockhai79.workers.dev';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch(e){ return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, v); } catch(e){} };
+let room = (location.hash.slice(1) || new URLSearchParams(location.search).get('r') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+let name = load('kr_name', null);
+let ws = null, retry = 0, tvOn = false, state = null, mode = 'auto', rid = 0, lastRid = 0, timer = null;
+
+let toastT;
+function toast(msg, ms = 3000){ const el = $('#toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => el.style.display = 'none', ms); }
+function setStatus(){
+  const el = $('#st');
+  const ok = ws && ws.readyState === 1;
+  el.className = ok && tvOn ? 'ok' : 'warn';
+  el.textContent = !navigator.onLine ? 'Điện thoại không có mạng' : !ok ? 'Đang kết nối…' : tvOn ? '● Đã nối máy hát · phòng ' + room : 'Máy hát chưa mở';
+  $('#who').textContent = name ? '👤 ' + name : '👤 Đặt tên';
+}
+function connect(){
+  if (!room || ws) return;
+  clearTimeout(timer);
+  const w = new WebSocket(`${RELAY}/room/${room}?role=phone&name=${encodeURIComponent(name || '')}`);
+  ws = w;
+  w.onopen = () => { retry = 0; setStatus(); };
+  w.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch(err){ return; } onMsg(m); };
+  w.onclose = () => { if (ws === w) ws = null; tvOn = false; setStatus(); timer = setTimeout(connect, Math.min(15000, 1000 * (++retry))); };
+  w.onerror = () => {};
+  setStatus();
+}
+setInterval(() => { if (ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 25000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !ws) connect(); });
+function send(o){
+  if (!ws || ws.readyState !== 1){ toast('Chưa nối được máy hát, đợi chút rồi thử lại.'); return false; }
+  if (!tvOn){ toast('Máy hát chưa mở hoặc đã tắt chức năng điện thoại chọn bài.'); return false; }
+  ws.send(JSON.stringify(o)); return true;
+}
+function onMsg(m){
+  if (m.t === 'tv'){ tvOn = m.on; setStatus(); return; }
+  if (m.t === 'pong') return;
+  if (m.t === 'state'){ tvOn = true; state = m; setStatus(); renderState(); return; }
+  if (m.t === 'toast'){ toast(m.msg, 3500); return; }
+  if (m.t === 'results'){ if (m.rid === lastRid) renderResults(m); return; }
+}
+function sub(s){
+  return [s.by ? '📱 ' + esc(s.by) : '', esc(s.artist), s.tone ? `<span class="tag">${esc(s.tone)}</span>` : '', s.yt ? '<span class="tag yt">YouTube</span>' : ''].filter(Boolean).join(' · ');
+}
+function renderState(){
+  const c = state && state.cur;
+  $('#nowT').textContent = c ? c.title : (state && state.queue.length ? 'Chưa phát — bấm ▶ để bắt đầu' : 'Chưa có bài nào');
+  $('#nowS').innerHTML = c ? sub(c) : '';
+  $('#bPlay').textContent = state && state.playing ? '⏸' : '▶';
+  $('#keyV').textContent = state ? (state.key > 0 ? '+' : '') + state.key : '0';
+  const q = state ? state.queue : [];
+  $('#qn').textContent = q.length ? `(${q.length})` : '';
+  $('#ql').innerHTML = q.length ? q.map((s, i) => `<div class="item" data-id="${esc(s.id)}"><span class="n">${i + 1}</span>
+      <div class="m"><div class="t">${esc(s.title)}</div><div class="s">${sub(s)}</div></div>
+      ${i ? '<button data-a="top" title="Ưu tiên lên đầu">⤒</button>' : ''}<button data-a="rm" title="Bỏ khỏi hàng chờ">✕</button></div>`).join('')
+    : '<div class="empty">Hàng chờ đang trống.<br>Qua thẻ 🔎 Tìm bài để chọn bài nhé.</div>';
+}
+function search(){
+  const q = $('#q').value.trim();
+  if (!q){ $('#q').focus(); return; }
+  if (!send({t:'search', q, mode, rid: ++rid})) return;
+  lastRid = rid;
+  $('#res').innerHTML = '<div class="empty">⏳ Đang tìm…</div>';
+  $('#q').blur();
+}
+function renderResults(m){
+  const queued = new Set((state && state.queue || []).map(s => s.id));
+  $('#hint').textContent = m.note && m.items.length ? '⚠️ ' + m.note : '';
+  $('#res').innerHTML = m.items.length ? m.items.map(s => `<div class="item" data-id="${esc(s.id)}">
+      ${s.thumb ? `<img src="${esc(s.thumb)}" alt="" loading="lazy">` : ''}
+      <div class="m"><div class="t">${esc(s.title)}</div><div class="s">${sub(s)}</div></div>
+      <button data-a="front" title="Thêm và ưu tiên lên đầu">⤒</button>
+      <button class="add" data-a="add">${queued.has(s.id) ? '✓' : '＋'}</button></div>`).join('')
+    : `<div class="empty">${esc(m.note || 'Không tìm thấy bài nào.')}</div>`;
+}
+$('#res').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const id = b.closest('.item').dataset.id;
+  if (send({t:'add', id, front: b.dataset.a === 'front'})) b.closest('.item').querySelector('.add').textContent = '✓';
+});
+$('#ql').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const it = b.closest('.item'), id = it.dataset.id;
+  if (b.dataset.a === 'rm' && !confirm('Bỏ bài “' + it.querySelector('.t').textContent + '” khỏi hàng chờ?')) return;
+  send({t: b.dataset.a, id});
+});
+$('#bGo').onclick = search;
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+$('#modes').onclick = e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x === b)); if ($('#q').value.trim()) search(); };
+document.querySelector('.tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $('#vFind').hidden = b.dataset.v !== 'find'; $('#vQueue').hidden = b.dataset.v !== 'queue';
+};
+$('#bPlay').onclick = () => send({t:'toggle'});
+$('#bNext').onclick = () => { if (confirm('Qua bài tiếp theo?')) send({t:'next'}); };
+$('#bRestart').onclick = () => send({t:'restart'});
+$('#bKd').onclick = () => send({t:'key', d:-1});
+$('#bKu').onclick = () => send({t:'key', d:1});
+
+// tìm bằng giọng nói
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+$('#bVoice').onclick = () => {
+  if (rec){ rec.stop(); return; }
+  if (!SR){ toast('Điện thoại này chưa hỗ trợ nói để tìm. Bạn gõ tên bài nhé.', 4000); return; }
+  rec = new SR(); rec.lang = 'vi-VN'; rec.interimResults = true;
+  $('#bVoice').classList.add('listening'); $('#hint').textContent = '🎙️ Nói tên bài…';
+  rec.onresult = e => {
+    let t = ''; for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+    t = t.replace(/[.,!?]/g, ' ').replace(/^\s*(cho tôi |cho em |mở |tìm |hát |chọn )*(bài hát |bài |ca khúc )?/i, '').trim();
+    $('#q').value = t;
+    if (e.results[e.results.length - 1].isFinal){ $('#hint').textContent = ''; search(); }
+  };
+  rec.onerror = e => { $('#hint').textContent = e.error === 'not-allowed' ? '⚠️ Chưa cho phép dùng micro.' : e.error === 'no-speech' ? '⚠️ Không nghe thấy, bấm 🎙️ nói lại nhé.' : e.error === 'aborted' ? '' : '⚠️ Lỗi nhận giọng: ' + e.error; };
+  rec.onend = () => { rec = null; $('#bVoice').classList.remove('listening'); if (/Nói tên bài/.test($('#hint').textContent)) $('#hint').textContent = ''; };
+  try { rec.start(); } catch(e){ rec = null; $('#bVoice').classList.remove('listening'); }
+};
+
+// tên + mã phòng
+function askName(){ $('#nameIn').value = name || ''; $('#ovName').hidden = false; setTimeout(() => $('#nameIn').focus(), 50); }
+function setName(n){ name = n; save('kr_name', n); $('#ovName').hidden = true; setStatus(); if (ws){ const w = ws; ws = null; w.close(); } connect(); }
+$('#bName').onclick = () => setName($('#nameIn').value.trim());
+$('#nameIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#bName').click(); });
+$('#bSkip').onclick = () => setName('');
+$('#who').onclick = askName;
+$('#bRoom').onclick = () => {
+  const r = $('#roomIn').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (r.length < 4){ toast('Mã phòng chưa đúng.'); return; }
+  room = r; history.replaceState(null, '', '#' + r); $('#ovRoom').hidden = true;
+  if (name === null) askName(); else connect();
+};
+addEventListener('online', () => { setStatus(); if (!ws) connect(); });
+addEventListener('offline', setStatus);
+
+setStatus(); renderState();
+if (!room) $('#ovRoom').hidden = false;
+else if (name === null) askName();
+else connect();
+</script>
+</body>
+</html>
