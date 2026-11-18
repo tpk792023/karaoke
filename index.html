@@ -170,6 +170,14 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
 #stagewrap:fullscreen .controls{bottom:0;border-radius:0}
 #stagewrap:fullscreen #seekRow{bottom:52px}
 #stagewrap:fullscreen #micPanel{bottom:86px;border-radius:0;border:0}
+#stagewrap.fs{position:fixed;inset:0;z-index:60;margin:0;border-radius:0}
+#stagewrap.fs #stage{flex:1;height:auto;aspect-ratio:auto;max-height:none}
+#stagewrap.fs{background:#000;padding:0;gap:0}
+#stagewrap.fs #stage{border:0;border-radius:0}
+#stagewrap.fs #seekRow,#stagewrap.fs .controls,#stagewrap.fs #micPanel{position:absolute;left:0;right:0;z-index:6;background:rgba(10,6,25,.85);padding:8px 14px;transition:opacity .4s}
+#stagewrap.fs .controls{bottom:0;border-radius:0}
+#stagewrap.fs #seekRow{bottom:52px}
+#stagewrap.fs #micPanel{bottom:86px;border-radius:0;border:0}
 #stagewrap.hideui #seekRow,#stagewrap.hideui .controls,#stagewrap.hideui #micPanel{opacity:0;pointer-events:none}
 #stagewrap.hideui{cursor:none}
 @media (max-width:1100px){
@@ -1419,12 +1427,22 @@ $('#monitor').onchange = e => { S.monitor = e.target.checked; applyMic(); save('
 $('#btnRec').onclick = toggleRec;
 $('#btnScore').onclick = () => { S.score = !S.score; save('kq_set', S); $('#btnScore').classList.toggle('on', S.score); toast(S.score ? '💯 Sẽ chấm điểm khi hết bài.' : 'Đã tắt chấm điểm.', 2000); };
 const wrap = $('#stagewrap');
-function toggleFull(){ if (document.fullscreenElement) document.exitFullscreen(); else wrap.requestFullscreen().catch(() => {}); }
+const isWV = /wv/.test(navigator.userAgent) || !wrap.requestFullscreen;
+const inFull = () => !!document.fullscreenElement || wrap.classList.contains('fs');
+function armHide(){ wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (inFull()) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 4000); }
+let hideTimer;
+function toggleFull(){
+  if (wrap.classList.contains('fs')){ wrap.classList.remove('fs'); armHide(); return; }
+  if (document.fullscreenElement){ document.exitFullscreen(); return; }
+  if (isWV){ wrap.classList.add('fs'); armHide(); return; }
+  wrap.requestFullscreen().catch(() => { wrap.classList.add('fs'); armHide(); });
+}
 $('#btnFull').onclick = toggleFull;
 $('#stage').addEventListener('dblclick', toggleFull);
-let hideTimer;
-wrap.addEventListener('mousemove', () => { wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (document.fullscreenElement) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 3000); });
-document.addEventListener('fullscreenchange', () => { wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (document.fullscreenElement) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 3000); });
+wrap.addEventListener('mousemove', armHide);
+document.addEventListener('keydown', () => { if (inFull()) armHide(); }, true);
+document.addEventListener('fullscreenchange', armHide);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && wrap.classList.contains('fs')){ wrap.classList.remove('fs'); armHide(); } });
 /* ---------- điều khiển từ xa / phím mũi tên (Android TV) ---------- */
 (function(){
   const SEL = 'button:not([disabled]),a[href],input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
