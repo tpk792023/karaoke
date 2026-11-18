@@ -46,6 +46,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,380px) 
 #permBar[hidden]{display:none}
 #permBar button{background:var(--gold);color:#221a00;border:0;font-weight:700;white-space:nowrap}
 .list{overflow-y:auto;min-height:0;flex:1}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .song{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
 .song:hover{background:var(--panel2)}
 .song.playing{background:rgba(255,79,163,.15)}
@@ -1416,6 +1417,45 @@ $('#stage').addEventListener('dblclick', toggleFull);
 let hideTimer;
 wrap.addEventListener('mousemove', () => { wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (document.fullscreenElement) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 3000); });
 document.addEventListener('fullscreenchange', () => { wrap.classList.remove('hideui'); clearTimeout(hideTimer); if (document.fullscreenElement) hideTimer = setTimeout(() => wrap.classList.add('hideui'), 3000); });
+/* ---------- điều khiển từ xa / phím mũi tên (Android TV) ---------- */
+(function(){
+  const SEL = 'button:not([disabled]),a[href],input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  const root = () => document.querySelector('dialog[open]') || document;
+  const vis = el => { const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return false; const cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.display !== 'none' && !el.closest('[hidden]'); };
+  function go(dir){
+    const cur = document.activeElement && document.activeElement !== document.body && root().contains(document.activeElement) ? document.activeElement : null;
+    const all = [...root().querySelectorAll(SEL)].filter(vis);
+    if (!all.length) return false;
+    if (!cur){ all.sort((a, b) => { const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); return (A.top - B.top) || (A.left - B.left); }); const f = all.find(e => e.getBoundingClientRect().top >= 0) || all[0]; f.focus({preventScroll:false}); return true; }
+    const c = cur.getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+    let best = null, bs = 1e12;
+    for (const el of all){
+      if (el === cur) continue;
+      const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+      let main, ortho;
+      if (dir === 'ArrowDown'){ if (y <= cy + 2) continue; main = Math.max(0, r.top - c.bottom); ortho = Math.max(0, r.left - c.right, c.left - r.right); }
+      else if (dir === 'ArrowUp'){ if (y >= cy - 2) continue; main = Math.max(0, c.top - r.bottom); ortho = Math.max(0, r.left - c.right, c.left - r.right); }
+      else if (dir === 'ArrowRight'){ if (x <= cx + 2) continue; main = Math.max(0, r.left - c.right); ortho = Math.max(0, r.top - c.bottom, c.top - r.bottom); }
+      else { if (x >= cx - 2) continue; main = Math.max(0, c.left - r.right); ortho = Math.max(0, r.top - c.bottom, c.top - r.bottom); }
+      const sc = main + ortho * 3 + (Math.abs(x - cx) + Math.abs(y - cy)) * 0.01;
+      if (sc < bs){ bs = sc; best = el; }
+    }
+    if (!best) return false;
+    best.focus(); best.scrollIntoView({block:'nearest', inline:'nearest'});
+    return true;
+  }
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.altKey || e.metaKey || e.defaultPrevented) return;
+    const k = e.key;
+    if (k === 'MediaPlayPause'){ e.preventDefault(); $('#btnPlay').click(); return; }
+    if (k === 'MediaTrackNext'){ e.preventDefault(); $('#btnNext').click(); return; }
+    if (!/^Arrow(Up|Down|Left|Right)$/.test(k)) return;
+    const t = e.target;
+    const horiz = k === 'ArrowLeft' || k === 'ArrowRight';
+    if (horiz && t.matches && t.matches('input[type=search],input[type=text],input[type=url],textarea,input[type=range],select')) return;
+    if (go(k)) e.preventDefault();
+  });
+})();
 document.addEventListener('keydown', e => {
   if (e.target.matches('input[type=search],input[type=text],textarea,select') || e.ctrlKey || e.altKey || e.metaKey) {
     if (e.key === 'Escape') e.target.blur();
