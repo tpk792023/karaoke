@@ -1,16 +1,20 @@
 {
-  "name": "Phòng Hát Karaoke",
+  "id": "./",
+  "name": "Phòng Hát Karaoke - Thầy Tống Phước Khải",
   "short_name": "Karaoke",
   "description": "Hát karaoke không quảng cáo, tìm bài bằng giọng nói, chạy không cần mạng",
   "lang": "vi",
+  "categories": ["music", "entertainment"],
+  "orientation": "any",
+  "display_override": ["fullscreen", "standalone"],
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0f0b1e",
   "theme_color": "#140f26",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
     {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}
   ]
 }

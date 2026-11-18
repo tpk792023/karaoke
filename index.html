@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Phòng Hát Karaoke</title>
+<title>Phòng Hát Karaoke - Thầy Tống Phước Khải</title>
 <meta name="description" content="Hát karaoke không quảng cáo, tìm bài bằng giọng nói, lưu danh sách, chạy offline">
 <meta name="theme-color" content="#140f26">
 <link rel="manifest" href="manifest.json">
@@ -25,6 +25,7 @@ input,select{font:inherit;color:var(--text);background:#120d26;border:1px solid 
 input[type=range]{padding:0;accent-color:var(--pink);background:none;border:0}
 header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:linear-gradient(90deg,#1d1440,#2a1240);border-bottom:1px solid var(--line);flex:none}
 .brand{font-weight:800;font-size:19px;letter-spacing:.3px;display:flex;align-items:center;gap:8px}
+.brand .by{font-size:13px;font-weight:600;color:var(--muted);-webkit-text-fill-color:var(--muted)}
 .brand b{background:linear-gradient(90deg,var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
 #netStat{font-size:13px;color:var(--muted);margin-left:auto}
 #netStat.off{color:var(--gold)}
@@ -108,6 +109,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(300px,380px) 
 #idle .mic{font-size:clamp(50px,9vw,110px);animation:float 3s ease-in-out infinite}
 @keyframes float{50%{transform:translateY(-12px) rotate(-6deg)}}
 #idle h2{margin:8px 0 4px;font-size:clamp(22px,3.5vw,42px);background:linear-gradient(90deg,var(--pink),var(--gold),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+#idle p.owner{color:var(--gold);font-weight:700;letter-spacing:.3px}
 #idle p{color:var(--muted);margin:4px 0;font-size:clamp(14px,1.6vw,19px)}
 #idle .note{position:absolute;font-size:28px;opacity:.25;animation:rise 9s linear infinite}
 @keyframes rise{from{transform:translateY(110%)}to{transform:translateY(-120%) rotate(40deg)}}
@@ -191,7 +193,7 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
 </head>
 <body>
 <header>
-  <div class="brand">🎤 <b>Phòng Hát Karaoke</b></div>
+  <div class="brand">🎤 <b>Phòng Hát Karaoke</b> <span class="by">· Thầy Tống Phước Khải</span></div>
   <span id="netStat"></span>
   <button id="btnRemote" title="Cho mọi người dùng điện thoại chọn bài">📱 Điện thoại chọn bài <span id="rBadge"></span></button>
   <button id="btnInstall" hidden>⬇ Cài vào máy</button>
@@ -228,6 +230,7 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
       <div id="idle">
         <div class="mic">🎤</div>
         <h2>Mời chọn bài</h2>
+        <p class="owner">Phòng hát của Thầy Tống Phước Khải</p>
         <p id="idleSub">Gõ tên bài vào ô tìm kiếm, bấm ＋ để thêm vào hàng chờ</p>
         <div id="idleQR" hidden><div class="qr"></div><div>📱 Quét mã để chọn bài<br>bằng điện thoại</div></div>
       </div>
@@ -282,10 +285,11 @@ dialog kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5
     <li><b>💾 Lưu danh sách</b> để cất các bài đã chọn; mở lại ở thẻ <b>📋 Danh sách</b>. Bấm <b>☆</b> để đưa bài vào Yêu thích.</li>
     <li><b>Tông ♭ ♯</b> hạ/nâng giọng; <b>🗣 Bớt lời</b> làm nhỏ giọng ca sĩ với bài hát gốc (mp3); <b>🎤 Micro</b> có vang; <b>⏺ Thu âm</b> lưu bản hát về máy.</li>
     <li>Lời bài hát: đặt tệp <b>.lrc</b> (lời chạy theo nhạc) hoặc <b>.txt</b> cùng tên, cùng thư mục với tệp nhạc.</li>
-    <li>Cài vào máy: bấm <b>⬇ Cài vào máy</b> (hoặc menu Chrome → Cài đặt ứng dụng) để mở như phần mềm riêng, không cần mạng.</li>
+    <li><b>Cài trên điện thoại / máy tính bảng Android:</b> mở trang bằng Chrome, bấm <b>⬇ Cài vào máy</b> (hoặc menu ⋮ → <b>Cài đặt ứng dụng</b> / Thêm vào màn hình chính). Biểu tượng 🎤 hiện ngoài màn hình, mở như phần mềm riêng, không cần mạng.</li>
+    <li><b>Cài trên Android TV box:</b> mở trình duyệt trên box (Chrome, Puffin TV hoặc Firefox), vào <b>tpk792023.github.io/karaoke</b> và cài như trên nếu trình duyệt có mục cài đặt. Nếu không có, đặt trang làm <b>dấu trang</b> hoặc trang chủ của trình duyệt. Bấm <b>📱 Điện thoại chọn bài</b> để mọi người chọn bài từ điện thoại.</li>
   </ol>
   <p><b>Phím tắt:</b> <kbd>Cách</kbd> phát/dừng · <kbd>N</kbd> qua bài · <kbd>F</kbd> toàn màn hình · <kbd>[</kbd> <kbd>]</kbd> tông · <kbd>M</kbd> micro · <kbd>V</kbd> tìm bằng giọng nói · <kbd>/</kbd> ô tìm kiếm</p>
-  <p style="color:var(--muted);font-size:13px">Ứng dụng không có quảng cáo, không gửi bài hát lên mạng. Mọi thứ nằm trên máy của thầy.</p>
+  <p style="color:var(--muted);font-size:13px">Ứng dụng không có quảng cáo, không gửi bài hát lên mạng. Mọi thứ nằm trên máy của thầy.<br>Phần mềm của <b>Thầy Tống Phước Khải</b>.</p>
   <form method="dialog" style="text-align:right"><button class="btn-main">Đã hiểu</button></form>
 </dialog>
 
