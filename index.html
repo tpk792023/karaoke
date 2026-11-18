@@ -1273,6 +1273,13 @@ async function onRemote(m){
       }
       if (m.t === 'next') next(); else if (!current) next(); else $('#btnPlay').click();
       break;
+    case 'setkey': {
+      const k = String(m.key || '').trim();
+      if (!/^[A-Za-z0-9_-]{30,60}$/.test(k)){ reply('Mã khóa không đúng dạng, thử lại nhé.'); break; }
+      save('kq_ytkey', k); ytShowSetup = false; if (tab === 'yt') renderYT(); pushState(true);
+      toast('🔑 Đã nhận mã khóa YouTube từ điện thoại.', 4000);
+      reply('✅ Máy hát đã lưu mã khóa YouTube. Thử tìm bài ở thẻ YouTube nhé.'); break;
+    }
     case 'restart': $('#btnRestart').click(); break;
     case 'key': if (curSrc === 'yt'){ reply('Bài YouTube không đổi tông được.'); break; } $(m.d > 0 ? '#keyUp' : '#keyDown').click(); break;
     case 'top': case 'rm': {
