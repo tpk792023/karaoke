@@ -1042,7 +1042,8 @@ function ytRec(vid, title, channel, thumb){
   ytTemp.set(id, rec);
   return rec;
 }
-function ytErrMsg(j){
+function ytErrMsg(j){ const m = ytErrMsg0(j), e = j && j.error || {}; return m + ' [' + (e.code || '') + ' ' + ((e.errors && e.errors[0] && e.errors[0].reason) || e.status || '') + ']'; }
+function ytErrMsg0(j){
   const e = j && j.error || {}, reason = (e.errors && e.errors[0] && e.errors[0].reason) || '';
   if (/quota/i.test(reason)) return 'Hôm nay đã hết lượt tìm YouTube (khoảng 100 lượt/ngày). Ngày mai tìm tiếp được; trong lúc chờ thầy dùng ô “Dán link” bên dưới.';
   if (/keyInvalid/i.test(reason) || /API key not valid/i.test(e.message || '')) return 'Mã khóa YouTube không đúng — thầy chép lại mã khóa nhé.';
@@ -1278,7 +1279,7 @@ async function onRemote(m){
       if (!/^[A-Za-z0-9_-]{30,60}$/.test(k)){ reply('Mã khóa không đúng dạng, thử lại nhé.'); break; }
       save('kq_ytkey', k); ytShowSetup = false; if (tab === 'yt') renderYT(); pushState(true);
       toast('🔑 Đã nhận mã khóa YouTube từ điện thoại.', 4000);
-      reply('✅ Máy hát đã lưu mã khóa YouTube. Thử tìm bài ở thẻ YouTube nhé.'); break;
+      reply('✅ Máy hát đã lưu mã khóa ' + k.slice(0, 6) + '…' + k.slice(-4) + ' (' + k.length + ' ký tự). Thử tìm bài nhé.'); break;
     }
     case 'restart': $('#btnRestart').click(); break;
     case 'key': if (curSrc === 'yt'){ reply('Bài YouTube không đổi tông được.'); break; } $(m.d > 0 ? '#keyUp' : '#keyDown').click(); break;
