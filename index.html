@@ -1276,7 +1276,7 @@ async function onRemote(m){
       break;
     case 'setkey': {
       const k = String(m.key || '').trim();
-      if (!/^[A-Za-z0-9_-]{30,60}$/.test(k)){ reply('Mã khóa không đúng dạng, thử lại nhé.'); break; }
+      if (!/^AIza[A-Za-z0-9_-]{35}$/.test(k)){ reply('Mã khóa không đúng dạng (phải 39 ký tự, bắt đầu AIza), thử lại nhé.'); break; }
       save('kq_ytkey', k); ytShowSetup = false; if (tab === 'yt') renderYT(); pushState(true);
       toast('🔑 Đã nhận mã khóa YouTube từ điện thoại.', 4000);
       reply('✅ Máy hát đã lưu mã khóa ' + k.slice(0, 6) + '…' + k.slice(-4) + ' (' + k.length + ' ký tự). Thử tìm bài nhé.'); break;

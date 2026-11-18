@@ -233,7 +233,7 @@ $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
 $('#modes').onclick = e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; document.querySelectorAll('#modes button').forEach(x => x.classList.toggle('on', x === b)); if ($('#q').value.trim()) search(); };
 $('#bKey').onclick = () => {
   const k = $('#keyIn').value.replace(/\s+/g, '');
-  if (!/^[A-Za-z0-9_-]{30,60}$/.test(k)){ toast('Mã chưa đúng, phải dài khoảng 39 ký tự, bắt đầu AIza.'); return; }
+  if (!/^AIza[A-Za-z0-9_-]{35}$/.test(k)){ toast(`Mã chưa đủ hoặc dư (đang ${k.length} ký tự, mã đúng dài 39 ký tự, bắt đầu AIza). Chép lại đủ nhé.`); return; }
   if (send({t:'setkey', key:k})){ $('#keyIn').value = ''; }
 };
 document.querySelector('.tabs').onclick = e => {
